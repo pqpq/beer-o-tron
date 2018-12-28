@@ -33,3 +33,11 @@ Python3-pyqt5.qtquick
 The QtQuick module of PyQt5 provides a framework for developing applications and libraries with the QML language.
 
 This package contains the Python 3 version of this module.
+
+### Installing Qt (core)
+Simple test main.qml wouldn't run so we needed to install Qt as well.
+https://www.qt.io/download
+Open source version.
+qt-unified-linux-x64-3.0.6-online.run
+installed to /opt
+chose 5.12
