@@ -5,6 +5,10 @@ This is the software that will run on a RPi with a small touch screen. Applicati
 
 A script running periodically will read temperature from a number of sensors and create a live graph which the application will display in the background. Application will use the temperature readings to decide whether to turn on the heater and pump, according to a pre-set temperature profile (e.g. maintain 66'C for mashing).
 
+After getting nowhere with PyQT and QML, we decided to go with C++/QML for the GUI (almost no C++, mainly QML), piping "messages" (currently TBD, probably simple ASCII) to/from a separate python script which will do the clever controller things.
+
+The problem with PyQT was that we couldn't get the QML to import QT modules. There doesn't seem to be much online help for this - PyQT seems to create applications the old 'designer' way - instantiate widgets in the python and wire up the UI there, rather than letting QML do it. We probably missed a configuration or deployment step but it was taking too long with no results. Since I use Qt/C++/QML for work, a C++ app is a doddle, and the UI aspects of this aren't the interesting bits. With luck the UI will be trivial.
+
 ## Notes
 
 Developed on Linux Mint 18.1 Cinnamon 64-bit
