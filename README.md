@@ -41,3 +41,14 @@ Open source version.
 qt-unified-linux-x64-3.0.6-online.run
 installed to /opt
 chose 5.12
+
+### QtCreator
+Struggled to get anything to build & link.
+
+    /usr/bin/ld: cannot find -lGL
+Answer: https://stackoverflow.com/questions/18406369/qt-cant-find-lgl-error
+
+We did this:
+
+    sudo ln -s /usr/lib/x86_64-linux-gnu/mesa/libGL.so.1 /usr/lib/libGL.so
+
