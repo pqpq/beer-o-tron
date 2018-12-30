@@ -9,19 +9,53 @@ Window {
     id: window
     visible: true
 
-    visibility: "FullScreen"
+    ////////////////////////////////////////////////
+    // Just for testing
+    //visibility: "FullScreen"
+    width: 640
+    height: 480
+    ///////////////////////////////////////////////
+
     flags: Qt.FramelessWindowHint
 
     title: qsTr("Beer-o-tron")
 
     Messages {
         id: messages
-        onReceived: label.text = message
+        onReceived: handle(message)
     }
 
-    Rectangle {
+    // Background image. Normally the live temperature graph.
+    // Can be a splash screen at startup, etc. etc.
+    Image {
+        id: background
         anchors.fill: parent
-        color: "lightseagreen"
+        source: "file:./../data/graph.png"
+    }
+
+    // Part transparent rectangle overlaying the background image so we can
+    // shade the graph depending on conditions. e.g. red if we're too hot,
+    // blue too cold.
+    Rectangle {
+        id: shade
+        anchors.fill: parent
+        color: "transparent"
+
+        property color c
+        onCChanged: {
+            if (c == "#00000000")
+                color = "transparent"
+            else
+                color = Qt.rgba(c.r, c.g, c.b, 0.33)
+        }
+    }
+
+    // Allow a press and hold anywhere on the screen to trigger an action,
+    // e.g emergency stop, or mode change
+    MouseArea {
+        id: wholeScreen
+        anchors.fill: parent
+        onPressAndHold: rect.toggle()
     }
 
     RowLayout {
@@ -50,15 +84,42 @@ Window {
         }
     }
 
+    /// @todo remove later - for testing
     Rectangle {
+        id: rect
         anchors.centerIn: parent
         color: "red"
         width: 200
         height: 100
 
+        function toggle() {
+            if (color == "#0000ff")
+                color = "plum"
+            else
+                color = "blue"
+        }
+
         Text {
             id: label
             anchors.centerIn: parent
+        }
+    }
+
+    function handle(message) {
+        message = message.trim()
+
+        label.text = message
+        if (message === "hot") {
+            shade.c = "red"
+        }
+        if (message === "cold") {
+            shade.c = /*"cyan"*/ "blue" /*"skyblue"*/
+        }
+        if (message === "ok") {
+            shade.c = "transparent"
+        }
+        if (message === "quit") {
+            Qt.quit()
         }
     }
 }
