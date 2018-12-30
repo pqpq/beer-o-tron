@@ -190,7 +190,7 @@ Window {
             shade.c = "red"
         }
         if (message === "cold") {
-            shade.c = /*"cyan"*/ "blue" /*"skyblue"*/
+            shade.c = "blue"
         }
         if (message === "ok") {
             shade.c = "transparent"
@@ -199,20 +199,56 @@ Window {
             Qt.quit()
         }
         if (message.startsWith("pump")) {
-            pump.visible = message.endsWith("on")
+            pump.visible = parameter(message) === "on"
         }
         if (message.startsWith("heat")) {
-            heater.visible = message.endsWith("on")
+            heater.visible = parameter(message) === "on"
         }
         if (message.startsWith("temp")) {
-            var x = message.slice(message.lastIndexOf(" "))
-            var t = parseFloat(x)
-            console.log("t=", x, t)
-            if (isNaN(t))
-                t = "---"
-            else
-                t = t.toPrecision(3)
-            temperature.text = t + "°C"
+            var degreesC = parseFloat(parameter(message))
+            temperature.text = formatTemperature(degreesC)
         }
+        if (message.startsWith("time")) {
+            var seconds = parseInt(parameter(message))
+            time.text = formatTime(seconds)
+        }
+    }
+
+    function parameter(message) {
+        return message.slice(message.lastIndexOf(" ") + 1)
+    }
+
+    function formatTemperature(degreesC) {
+        var formattedTemperature = "--"
+        if (!isNaN(degreesC))
+            formattedTemperature = degreesC.toPrecision(3)
+        return formattedTemperature + "°C"
+    }
+
+    function formatTime(seconds) {
+        var formattedTime = "-- s"
+        if (!isNaN(seconds)) {
+            var h = Math.floor(seconds/3600)
+            var m = Math.floor((seconds - h*3600)/60)
+            var s = seconds % 60
+
+            if (h) {
+                formattedTime = parseInt(h) + 'h'
+                if (m < 10)
+                    formattedTime += '0'
+                formattedTime += parseInt(m)
+            }
+            else if (m) {
+                formattedTime = parseInt(m) + 'm'
+                if (s < 10)
+                    formattedTime += '0'
+                formattedTime += parseInt(s)
+            }
+            else {
+                formattedTime = parseInt(s) + 's'
+            }
+        }
+
+        return formattedTime
     }
 }
