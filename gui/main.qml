@@ -24,6 +24,8 @@ Window {
     // development, and small screen on RPi.
     property int iconSize: height / 10
     property int iconSpacing: iconSize / 4
+    property int statusFontSize: iconSize * 2/3
+    property int statusFontWeight: Font.Bold
 
     Messages {
         id: messages
@@ -64,7 +66,7 @@ Window {
     }
 
     Row {
-        id: status
+        id: rightStatus
         anchors.right: parent.right
         anchors.rightMargin: iconSpacing
         anchors.top: parent.top
@@ -106,11 +108,29 @@ Window {
 
         Text {
             id: time
-            font.pixelSize: iconSize * 2/3
-            font.weight: Font.Bold
+            font.pixelSize: statusFontSize
+            font.weight: statusFontWeight
             horizontalAlignment: Text.AlignRight
             verticalAlignment: Text.AlignVCenter
-            text: "1h30"
+            text: "???"
+        }
+    }
+
+    Row {
+        id: leftStatus
+        anchors.left: parent.left
+        anchors.leftMargin: iconSpacing
+        anchors.top: parent.top
+        anchors.topMargin: iconSpacing
+        spacing: iconSpacing
+
+        Text {
+            id: temperature
+            font.pixelSize: statusFontSize
+            font.weight: statusFontWeight
+            horizontalAlignment: Text.AlignLeft
+            verticalAlignment: Text.AlignVCenter
+            text: "---"
         }
     }
 
@@ -183,6 +203,16 @@ Window {
         }
         if (message.startsWith("heat")) {
             heater.visible = message.endsWith("on")
+        }
+        if (message.startsWith("temp")) {
+            var x = message.slice(message.lastIndexOf(" "))
+            var t = parseFloat(x)
+            console.log("t=", x, t)
+            if (isNaN(t))
+                t = "---"
+            else
+                t = t.toPrecision(3)
+            temperature.text = t + "°C"
         }
     }
 }
