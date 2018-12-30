@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
+        <file>icons/pump.svg</file>
+        <file>icons/flame.svg</file>
     </qresource>
 </RCC>

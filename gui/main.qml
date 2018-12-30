@@ -16,9 +16,14 @@ Window {
     height: 480
     ///////////////////////////////////////////////
 
-    flags: Qt.FramelessWindowHint
+    //flags: Qt.FramelessWindowHint
 
     title: qsTr("Beer-o-tron")
+
+    // scale everything with screen size so it works on large screen during
+    // development, and small screen on RPi.
+    property int iconSize: height / 10
+    property int iconSpacing: iconSize / 4
 
     Messages {
         id: messages
@@ -56,6 +61,41 @@ Window {
         id: wholeScreen
         anchors.fill: parent
         onPressAndHold: rect.toggle()
+    }
+
+    Row {
+        id: status
+        anchors.right: parent.right
+        anchors.rightMargin: iconSpacing
+        anchors.top: parent.top
+        anchors.topMargin: iconSpacing
+        spacing: iconSpacing
+        Text {
+            id: time
+            font.pixelSize: iconSize * 0.666
+            horizontalAlignment: Text.AlignRight
+            verticalAlignment: Text.AlignVCenter
+            text: "1h30"
+        }
+        Image {
+            id: pump
+            height: iconSize
+            width: iconSize
+            source: "qrc:/icons/pump.svg"
+            RotationAnimator on rotation {
+                from: 0
+                to: 360
+                duration: 2000
+                loops: Animation.Infinite
+                running: pump.visible
+            }
+        }
+        Image {
+            id: heater
+            height: iconSize
+            width: iconSize
+            source: "qrc:/icons/flame.svg"
+        }
     }
 
     RowLayout {
