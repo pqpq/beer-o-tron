@@ -70,14 +70,20 @@ Window {
         anchors.top: parent.top
         anchors.topMargin: iconSpacing
         spacing: iconSpacing
-        Text {
-            id: time
-            font.pixelSize: iconSize * 2/3
-            font.weight: Font.Bold
-            horizontalAlignment: Text.AlignRight
-            verticalAlignment: Text.AlignVCenter
-            text: "1h30"
+
+        Image {
+            id: heater
+            height: iconSize
+            width: iconSize
+            source: "qrc:/icons/flame.svg"
         }
+        Item {
+            id: heaterSpacer
+            height: iconSize
+            width: iconSize
+            visible: !heater.visible
+        }
+
         Image {
             id: pump
             height: iconSize
@@ -91,11 +97,20 @@ Window {
                 running: pump.visible
             }
         }
-        Image {
-            id: heater
+        Item {
+            id: pumpSpacer
             height: iconSize
             width: iconSize
-            source: "qrc:/icons/flame.svg"
+            visible: !pump.visible
+        }
+
+        Text {
+            id: time
+            font.pixelSize: iconSize * 2/3
+            font.weight: Font.Bold
+            horizontalAlignment: Text.AlignRight
+            verticalAlignment: Text.AlignVCenter
+            text: "1h30"
         }
     }
 
@@ -148,6 +163,7 @@ Window {
 
     function handle(message) {
         message = message.trim()
+        message = message.toLowerCase()
 
         label.text = message
         if (message === "hot") {
@@ -161,6 +177,12 @@ Window {
         }
         if (message === "quit") {
             Qt.quit()
+        }
+        if (message.startsWith("pump")) {
+            pump.visible = message.endsWith("on")
+        }
+        if (message.startsWith("heat")) {
+            heater.visible = message.endsWith("on")
         }
     }
 }
