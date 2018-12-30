@@ -72,7 +72,8 @@ Window {
         spacing: iconSpacing
         Text {
             id: time
-            font.pixelSize: iconSize * 0.666
+            font.pixelSize: iconSize * 2/3
+            font.weight: Font.Bold
             horizontalAlignment: Text.AlignRight
             verticalAlignment: Text.AlignVCenter
             text: "1h30"
@@ -129,8 +130,8 @@ Window {
         id: rect
         anchors.centerIn: parent
         color: "red"
-        width: 200
-        height: 100
+        width: parent.width/3
+        height: parent.height/3
 
         function toggle() {
             if (color == "#0000ff")
