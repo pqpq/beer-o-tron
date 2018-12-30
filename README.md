@@ -9,6 +9,10 @@ After getting nowhere with PyQT and QML, we decided to go with C++/QML for the G
 
 The problem with PyQT was that we couldn't get the QML to import QT modules. There doesn't seem to be much online help for this - PyQT seems to create applications the old 'designer' way - instantiate widgets in the python and wire up the UI there, rather than letting QML do it. We probably missed a configuration or deployment step but it was taking too long with no results. Since I use Qt/C++/QML for work, a C++ app is a doddle, and the UI aspects of this aren't the interesting bits. With luck the UI will be trivial.
 
+## Ideas
+Simple GUI, complicated Python. Use messages from python to create & remove buttons? Or hide & show pre-set buttons? So the GUI has no state and knows nothing about the logic?
+Might make Python too complicated. Maybe better to have some operating modes in GUI (setup, run etc) with fixed layouts, then the python would control the mode.
+
 ## Notes
 
 Developed on Linux Mint 18.1 Cinnamon 64-bit
