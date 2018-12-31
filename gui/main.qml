@@ -181,6 +181,27 @@ Window {
         }
     }
 
+    Timer {
+        id: heartbeat
+        interval: 1000
+        repeat: true
+        running: true
+
+        property int missed: 0
+        onTriggered: {
+            if (missed > 4) {
+                /// @todo Do something more serious.
+                console.error("Hearbeat failed!")
+            }
+            missed++
+            messages.send("heartbeat")
+        }
+
+        function gotReply() {
+            missed = 0
+        }
+    }
+
     function handle(message) {
         message = message.trim()
         message = message.toLowerCase()
@@ -211,6 +232,9 @@ Window {
         if (message.startsWith("time")) {
             var seconds = parseInt(parameter(message))
             time.text = formatTime(seconds)
+        }
+        if (message === "heartbeat") {
+            heartbeat.gotReply()
         }
     }
 
