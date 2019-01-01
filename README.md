@@ -19,7 +19,10 @@ Might make Python too complicated. Maybe better to have some operating modes in 
 
 ## Notes
 
-Developed on Linux Mint 18.1 Cinnamon 64-bit
+Initially developed on Linux Mint 18.1 Cinnamon 64-bit.
+
+### Icons
+https://material.io/tools/icons/?style=baseline
 
 ### Installing PyQt
 
