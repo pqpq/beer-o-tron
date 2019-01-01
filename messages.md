@@ -23,3 +23,4 @@ Message|Parameters|Meaning
 `bye` | | GUI is shutting down.
 `heartbeat` | | GUI wants to check the core is there.
 `set` | *degrees* | Maintain a set temperature.<br> *degrees* : (float) The temperature to maintain in degrees Centigrade. 
+`stop` |  | Stop heat and pump immediately.
