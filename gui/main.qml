@@ -193,22 +193,45 @@ Window {
     ColumnLayout {
         id: setChangeMenu
         anchors.centerIn: parent
-        Button {
-            text: "temperature"
-            onPressed: console.log("temperature")
-        }
-        Button {
-            text: "{tick}"
-            onPressed: {
-                console.log("OK")
-                menu.state = "set.run"
-                messages.send("set 14.3")
+
+        SpinBox {
+            id: temperatureSpinner
+            from: 0
+            value: 666
+            to: 100 * 10
+            stepSize: 10
+
+            property int decimals: 1
+            property real realValue: value / 10
+
+            validator: DoubleValidator {
+                bottom: Math.min(temperatureSpinner.from, temperatureSpinner.to)
+                top:  Math.max(temperatureSpinner.from, temperatureSpinner.to)
+            }
+
+            textFromValue: function(value, locale) {
+                return Number(value / 10).toLocaleString(locale, 'f', temperatureSpinner.decimals)
+            }
+
+            valueFromText: function(text, locale) {
+                return Number.fromLocaleString(locale, text) * 10
             }
         }
-        Button {
-            text: "X"
+
+        RoundButton {
+            icon.source: "qrc:/icons/check.svg"
+            onPressed: {
+                console.log("OK", temperatureSpinner.realValue)
+                menu.state = "set.run"
+                messages.send("set " + temperatureSpinner.realValue.toString())
+            }
+        }
+        RoundButton {
+            icon.source: "qrc:/icons/close.svg"
             onPressed: {
                 console.log("X")
+
+                /// @todo restore previous value to spinner
 
                 // this needs to go to setMenu if we're running
                 menu.state = "top"
@@ -219,27 +242,28 @@ Window {
     ColumnLayout {
         id: setMenu
         anchors.centerIn: parent
-        Button {
-            text: "Change temperature"
+        RoundButton {
+            icon.source: "qrc:/icons/settings.svg"
             onPressed: {
                 console.log("Change temperature")
                 menu.state = "set.change"
             }
         }
-        Button {
-            text: "Main menu"
+        RoundButton {
+            icon.source: "qrc:/icons/menu.svg"
             onPressed: {
                 console.log("Main menu")
                 menu.state = "top"
             }
         }
         Button {
-            text: "STOP"
+            text: "EMERGENCY STOP"
             onPressed: {
                 console.log("STOP")
                 messages.send("stop")
                 menu.state = "top"
             }
+            background: Rectangle { color: "red" }
         }
     }
     /*

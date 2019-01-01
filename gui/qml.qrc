@@ -3,5 +3,10 @@
         <file>main.qml</file>
         <file>icons/pump.svg</file>
         <file>icons/flame.svg</file>
+        <file>icons/menu.svg</file>
+        <file>icons/close.svg</file>
+        <file>icons/check.svg</file>
+        <file>icons/back.svg</file>
+        <file>icons/settings.svg</file>
     </qresource>
 </RCC>
