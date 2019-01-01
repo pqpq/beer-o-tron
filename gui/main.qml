@@ -62,7 +62,7 @@ Window {
     MouseArea {
         id: wholeScreen
         anchors.fill: parent
-        onPressAndHold: rect.toggle()
+        onPressAndHold: menu.screenPress()
     }
 
     Row {
@@ -134,6 +134,7 @@ Window {
         }
     }
 
+    /*
     RowLayout {
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 20
@@ -159,7 +160,89 @@ Window {
             }
         }
     }
+    */
 
+    ColumnLayout {
+        id: topLevelMenu
+        anchors.centerIn: parent
+        Button {
+            text: "Set temperature"
+            onPressed: {
+                console.log("set temperature")
+                menu.state = "set.change"
+            }
+        }
+        Button {
+            text: "Profiles"
+            onPressed: console.log("profiles")
+        }
+        Button {
+            text: "Create profile"
+            onPressed: console.log("create profile")
+        }
+        Button {
+            text: "Quit"
+            onPressed: {
+                messages.send("bye")
+                console.log("quit")
+                Qt.quit()
+            }
+        }
+    }
+
+    ColumnLayout {
+        id: setChangeMenu
+        anchors.centerIn: parent
+        Button {
+            text: "temperature"
+            onPressed: console.log("temperature")
+        }
+        Button {
+            text: "{tick}"
+            onPressed: {
+                console.log("OK")
+                menu.state = "set.run"
+                messages.send("set 14.3")
+            }
+        }
+        Button {
+            text: "X"
+            onPressed: {
+                console.log("X")
+
+                // this needs to go to setMenu if we're running
+                menu.state = "top"
+            }
+        }
+    }
+
+    ColumnLayout {
+        id: setMenu
+        anchors.centerIn: parent
+        Button {
+            text: "Change temperature"
+            onPressed: {
+                console.log("Change temperature")
+                menu.state = "set.change"
+            }
+        }
+        Button {
+            text: "Main menu"
+            onPressed: {
+                console.log("Main menu")
+                menu.state = "top"
+            }
+        }
+        Button {
+            text: "STOP"
+            onPressed: {
+                console.log("STOP")
+                messages.send("stop")
+                menu.state = "top"
+            }
+        }
+    }
+    /*
     /// @todo remove later - for testing
     Rectangle {
         id: rect
@@ -178,6 +261,45 @@ Window {
         Text {
             id: label
             anchors.centerIn: parent
+        }
+    }
+    */
+
+    Item {
+        id: menu
+        state: "top"
+        states: [
+            State {
+                name: "top"
+                PropertyChanges { target: topLevelMenu; visible: true }
+                PropertyChanges { target: setChangeMenu; visible: false }
+                PropertyChanges { target: setMenu; visible: false }
+            },
+
+            State {
+                name: "set.change"
+                PropertyChanges { target: topLevelMenu; visible: false }
+                PropertyChanges { target: setChangeMenu; visible: true }
+                PropertyChanges { target: setMenu; visible: false }
+            },
+            State {
+                name: "set.run"
+                PropertyChanges { target: topLevelMenu; visible: false }
+                PropertyChanges { target: setChangeMenu; visible: false }
+                PropertyChanges { target: setMenu; visible: false }
+            },
+            State {
+                name: "set.menu"
+                PropertyChanges { target: topLevelMenu; visible: false }
+                PropertyChanges { target: setChangeMenu; visible: false }
+                PropertyChanges { target: setMenu; visible: true }
+            }
+        ]
+
+        function screenPress() {
+            //rect.toggle()
+            if (state == "set.run")
+                state = "set.menu"
         }
     }
 
