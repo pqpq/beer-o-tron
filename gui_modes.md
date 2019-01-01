@@ -17,7 +17,7 @@ Controller: maintain a set temperature.
 
 Background: graph showing temperature history.
 
-There are two substates. Initially goes straight to *Set*.
+There are three substates. Initially goes straight to *Set*.
 
 ### Set
 This state is for setting the temperature to maintain. 
@@ -34,5 +34,12 @@ GUI:
 Controller: maintain the temperature setpoint.
 
 GUI:
-* Return button to go back to top level menu.
-* Screen press goes to the *Set* state.
+* Screen press goes to the *Menu* state.
+
+### Menu
+Controller: maintain the temperature setpoint.
+
+GUI:
+* Change temperature
+* Main menu
+* Large button across bottom part of screen "Emergency Stop"
