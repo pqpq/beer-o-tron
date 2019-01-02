@@ -8,5 +8,7 @@
         <file>icons/check.svg</file>
         <file>icons/back.svg</file>
         <file>icons/settings.svg</file>
+        <file>icons/timeline_add.svg</file>
+        <file>icons/timeline.svg</file>
     </qresource>
 </RCC>

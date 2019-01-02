@@ -172,12 +172,13 @@ Window {
                 menu.state = "set.change"
             }
         }
-        Button {
-            text: "Profiles"
+        RoundButton {
+            //icon.source: "qrc:/icons/settings.svg"
+            icon.source: "qrc:/icons/timeline.svg"
             onPressed: console.log("profiles")
         }
-        Button {
-            text: "Create profile"
+        RoundButton {
+            icon.source: "qrc:/icons/timeline_add.svg"
             onPressed: console.log("create profile")
         }
         Button {
