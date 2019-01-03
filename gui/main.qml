@@ -23,7 +23,8 @@ Window {
     // scale everything with screen size so it works on large screen during
     // development, and small screen on RPi.
     property int iconSize: height / 10
-    property int iconSpacing: iconSize / 4
+    property int statusIconSpacing: iconSize / 4
+    property int menuIconSpacing: iconSize / 2
     property int statusFontSize: iconSize * 2/3
     property int statusFontWeight: Font.Bold
 
@@ -68,10 +69,10 @@ Window {
     Row {
         id: rightStatus
         anchors.right: parent.right
-        anchors.rightMargin: iconSpacing
+        anchors.rightMargin: statusIconSpacing
         anchors.top: parent.top
-        anchors.topMargin: iconSpacing
-        spacing: iconSpacing
+        anchors.topMargin: statusIconSpacing
+        spacing: statusIconSpacing
 
         Image {
             id: heater
@@ -119,10 +120,10 @@ Window {
     Row {
         id: leftStatus
         anchors.left: parent.left
-        anchors.leftMargin: iconSpacing
+        anchors.leftMargin: statusIconSpacing
         anchors.top: parent.top
-        anchors.topMargin: iconSpacing
-        spacing: iconSpacing
+        anchors.topMargin: statusIconSpacing
+        spacing: statusIconSpacing
 
         Text {
             id: temperature
@@ -162,27 +163,36 @@ Window {
     }
     */
 
-    ColumnLayout {
+    RowLayout {
         id: topLevelMenu
         anchors.centerIn: parent
-        Button {
-            text: "Set temperature"
+        spacing: window.menuIconSpacing
+
+        RoundButton {
+            icon.source: "qrc:/icons/thermometer.svg"
+            icon.width: window.iconSize
+            icon.height: window.iconSize
             onPressed: {
                 console.log("set temperature")
                 menu.state = "set.change"
             }
         }
         RoundButton {
-            //icon.source: "qrc:/icons/settings.svg"
             icon.source: "qrc:/icons/timeline.svg"
+            icon.width: window.iconSize
+            icon.height: window.iconSize
             onPressed: console.log("profiles")
         }
         RoundButton {
             icon.source: "qrc:/icons/timeline_add.svg"
+            icon.width: window.iconSize
+            icon.height: window.iconSize
             onPressed: console.log("create profile")
         }
-        Button {
-            text: "Quit"
+        RoundButton {
+            icon.source: "qrc:/icons/power.svg"
+            icon.width: window.iconSize
+            icon.height: window.iconSize
             onPressed: {
                 messages.send("bye")
                 console.log("quit")
