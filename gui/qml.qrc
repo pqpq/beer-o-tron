@@ -10,5 +10,7 @@
         <file>icons/settings.svg</file>
         <file>icons/timeline_add.svg</file>
         <file>icons/timeline.svg</file>
+        <file>icons/thermometer.svg</file>
+        <file>icons/power.svg</file>
     </qresource>
 </RCC>
