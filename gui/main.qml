@@ -277,7 +277,7 @@ Window {
             background: Rectangle { color: "red" }
         }
     }
-    /*
+/*
     /// @todo remove later - for testing
     Rectangle {
         id: rect
@@ -294,11 +294,12 @@ Window {
         }
 
         Text {
+            text: "???"
             id: label
             anchors.centerIn: parent
         }
     }
-    */
+*/
 
     Item {
         id: menu
@@ -363,7 +364,8 @@ Window {
         message = message.trim()
         message = message.toLowerCase()
 
-        label.text = message
+        //label.text = message
+
         if (message === "hot") {
             shade.c = "red"
         }
