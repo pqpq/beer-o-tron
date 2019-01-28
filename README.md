@@ -20,6 +20,24 @@ Might make Python too complicated. Maybe better to have some operating modes in 
 ## Notes
 
 Initially developed on Linux Mint 18.1 Cinnamon 64-bit.
+### Pipes and Testing
+We decided that the GUI would send and receive messages on stdin and stdout. In the final system it would communicate with the Python core over pipes. This has the benefit of being able to test the GUI by itself from the command line.
+
+At one point I had the GUI talking to <something> in a second terminal, using two named pipes, but I didn't take notes and I can't for the life of me work out what I did. It echoed the output from the GUI, and you could type commands to the GUI.
+
+https://unix.stackexchange.com/questions/53641/how-to-make-bidirectional-pipe-between-two-programs
+
+Open 2 terminals in the Qt build directory. In either, create 2 named pipes. In one, run ??? and in the other run the GUI:
+
+    terminal1 $ mkfifo f1 f2
+    terminal1 $ cat >f1 <f2   # this echoes hearbeats back, but you can't type
+    terminal1 $ echo >f1 <f2
+
+and
+
+    terminal2 $ ./gui <f1 >f2
+
+then terminal 1 shows output from the GUI (e.g. heartbeats, mode changes) and typing in terminal 1 sends the results to the GUI as though it was the python core.
 
 ### Icons
 https://material.io/tools/icons/?style=baseline
