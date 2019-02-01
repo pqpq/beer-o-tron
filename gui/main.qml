@@ -79,6 +79,7 @@ Window {
             height: iconSize
             width: iconSize
             source: "qrc:/icons/flame.svg"
+            visible: false
         }
         Item {
             id: heaterSpacer
@@ -92,6 +93,7 @@ Window {
             height: iconSize
             width: iconSize
             source: "qrc:/icons/pump.svg"
+            visible: false
             RotationAnimator on rotation {
                 from: 0
                 to: 360
@@ -113,7 +115,41 @@ Window {
             font.weight: statusFontWeight
             horizontalAlignment: Text.AlignRight
             verticalAlignment: Text.AlignVCenter
-            text: "???"
+            visible: text
+        }
+
+        Image {
+            id: status
+            height: iconSize
+            width: iconSize
+
+            property int state: 0
+
+            function heartbeat() {
+                state = state === 0 ? 1 : 0
+                setSource()
+            }
+            function setSource() {
+                opacity = 1
+                if (state === 0) source = "qrc:/icons/heart_solid.svg"
+                else if (state === 1) source = "qrc:/icons/heart_border.svg"
+                else {
+                    source = "qrc:/icons/problem.svg"
+                }
+            }
+            function problem() {
+                if (state !== 2) {
+                    state = 2
+                    setSource()
+                }
+            }
+            Timer {
+                interval: 500
+                running: status.state === 2
+                repeat: true
+                onTriggered: status.opacity = status.opacity ? 0 : 1
+            }
+            onStateChanged: console.log("state=", state)
         }
     }
 
@@ -350,12 +386,14 @@ Window {
             if (missed > 4) {
                 /// @todo Do something more serious.
                 console.error("Hearbeat failed!")
+                status.problem()
             }
             missed++
             messages.send("heartbeat")
         }
 
         function gotReply() {
+            status.heartbeat()
             missed = 0
         }
     }
@@ -391,6 +429,9 @@ Window {
         if (message.startsWith("time")) {
             var seconds = parseInt(parameter(message))
             time.text = formatTime(seconds)
+        }
+        if (message === "stop") {
+            time.text = ""
         }
         if (message === "heartbeat") {
             heartbeat.gotReply()

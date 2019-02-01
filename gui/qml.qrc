@@ -12,5 +12,8 @@
         <file>icons/timeline.svg</file>
         <file>icons/thermometer.svg</file>
         <file>icons/power.svg</file>
+        <file>icons/problem.svg</file>
+        <file>icons/heart_solid.svg</file>
+        <file>icons/heart_border.svg</file>
     </qresource>
 </RCC>
