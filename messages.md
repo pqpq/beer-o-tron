@@ -10,9 +10,10 @@ Message|Parameters|Meaning
 `cold` | | Sensor temperature is colder than permitted.
 `ok` | | Sensor temperature is within permitted bounds.
 `quit` | | Terminate GUI application
-`pump` | [on] | Pump status. Any parameter other than 'on' signifies off.
-`heat` | [on] | Heater status. Any parameter other than 'on' signifies off.
+`pump` | [on] | Pump status. Any parameter other than 'on', or no parameter, signifies off.
+`heat` | [on] | Heater status. Any parameter other than 'on', or no parameter, signifies off.
 `time` | *seconds* | Time update.<br> *seconds* : (int) number of seconds since the run started.
+`stop` | | Hide the run timer.
 `temp` | *degrees* | Temperature update.<br> *degrees* : (float) current sensor temperature in degrees Centigrade. 
 `hearbeat` | | Response to a heartbeat from the GUI. Never sent unrequested.
 
