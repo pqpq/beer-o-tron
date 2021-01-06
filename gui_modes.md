@@ -1,4 +1,6 @@
 # GUI Modes
+The current temperature will always be displayed, as this is critical information for any/all modes.
+Likewise heat and pump status will always be displayed. All modes must allow space for these items.
 
 ## Startup
 Initial state.
