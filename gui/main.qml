@@ -18,7 +18,7 @@ Window {
 
     //flags: Qt.FramelessWindowHint
 
-    title: qsTr("Beer-o-tron")
+    title: qsTr("Mash-o-MatiC")
 
     // scale everything with screen size so it works on large screen during
     // development, and small screen on RPi.

@@ -1,5 +1,5 @@
-# beer-o-tron
-Homebrew beer heater controller
+# Mash-o-matiC
+Homebrew beer mash heater controller
 
 This is the software that will run on a RPi with a small touch screen. Application written in Python3, using PyQT, with GUI written in QML (effectively Javascript).
 
@@ -20,6 +20,8 @@ Might make Python too complicated. Maybe better to have some operating modes in 
 ## Notes
 
 Initially developed on Linux Mint 18.1 Cinnamon 64-bit.
+Now Linux Mint 20 Cinnamon.
+
 ### Pipes and Testing
 We decided that the GUI would send and receive messages on stdin and stdout. In the final system it would communicate with the Python core over pipes. This has the benefit of being able to test the GUI by itself from the command line.
 
@@ -71,9 +73,9 @@ This package contains the Python 3 version of this module.
 Simple test main.qml wouldn't run so we needed to install Qt as well.
 https://www.qt.io/download
 Open source version.
-qt-unified-linux-x64-3.0.6-online.run
+qt-unified-linux-x64-4.0.1-online.run
 installed to /opt
-chose 5.12
+chose 5.15.2
 
 ### QtCreator
 Struggled to get anything to build & link.
@@ -84,4 +86,8 @@ Answer: https://stackoverflow.com/questions/18406369/qt-cant-find-lgl-error
 We did this:
 
     sudo ln -s /usr/lib/x86_64-linux-gnu/mesa/libGL.so.1 /usr/lib/libGL.so
+
+or
+
+    sudo ln -s /usr/lib/x86_64-linux-gnu/libGL.so.1 /usr/lib/libGL.so
 
