@@ -1,4 +1,4 @@
-import QtQuick 2.12
+﻿import QtQuick 2.12
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 import QtQuick.Window 2.12
@@ -243,13 +243,31 @@ Window {
 
         SpinBox {
             id: temperatureSpinner
-            from: 0
+            from: 20 * 10
             value: 666
             to: 100 * 10
-            stepSize: 10
+            stepSize: 1
 
+            onValueChanged: console.log("temperatureSpinner value=", value)
+
+            /// @todo remember value when made visible, so cancel can work.
             property int decimals: 1
             property real realValue: value / 10
+            property real previousValue: 0
+
+            onVisibleChanged: {
+                console.log("temperatureSpinner visible=", visible)
+                previousValue = realValue
+                value = realValue * 10
+            }
+
+            function cancel() {
+                realValue = previousValue
+            }
+
+            function accept() {
+                previousValue = realValue
+            }
 
             validator: DoubleValidator {
                 bottom: Math.min(temperatureSpinner.from, temperatureSpinner.to)
@@ -269,6 +287,7 @@ Window {
             icon.source: "qrc:/icons/check.svg"
             onPressed: {
                 console.log("OK", temperatureSpinner.realValue)
+                temperatureSpinner.accept()
                 menu.state = "set.run"
                 messages.send("set " + temperatureSpinner.realValue.toString())
             }
@@ -277,8 +296,7 @@ Window {
             icon.source: "qrc:/icons/close.svg"
             onPressed: {
                 console.log("X")
-
-                /// @todo restore previous value to spinner
+                temperatureSpinner.cancel()
 
                 // this needs to go to setMenu if we're running
                 menu.state = "top"
