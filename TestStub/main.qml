@@ -8,7 +8,7 @@ ApplicationWindow {
     width: 640
     height: 480
     visible: true
-    title: qsTr("Mash-o-matiC Test Stub")
+    title: qsTr("Test Stub for Mash-o-matiC")
 
     property bool sendHeartbeats: true
     property real temperature: 20
@@ -139,6 +139,10 @@ ApplicationWindow {
         id: messages
         onReceived: handle(message)
         onSent: list.add("Tx: " + message)
+        onEof: {
+            list.add("Rx: EOF")
+            heartbeat.stop()
+        }
 
         function sendOptional(message, event) {
             if (event.modifiers & Qt.ControlModifier) {

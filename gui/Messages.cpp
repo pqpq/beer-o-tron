@@ -29,5 +29,14 @@ void Messages::onActivated(int /*socket*/)
     }
     while (c != EOF && c != '\n');
 
-    emit received(s);
+    if (!s.isEmpty())
+    {
+        emit received(s);
+    }
+
+    if (c == EOF)
+    {
+        emit eof();
+        notifier.setEnabled(false);
+    }
 }

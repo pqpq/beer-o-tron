@@ -91,3 +91,10 @@ or
 
     sudo ln -s /usr/lib/x86_64-linux-gnu/libGL.so.1 /usr/lib/libGL.so
 
+### TestStub
+
+Simple test app that can be connected to gui through pipes:
+    mkfifo f1 f2
+    TestStub >f1 <f2 & cat <f1 >f2
+which can inject all types of message, and echoes anything sent back.
+

@@ -13,6 +13,7 @@ public:
     Q_INVOKABLE void send(QString message);
     Q_SIGNAL void received(QString message);
     Q_SIGNAL void sent(QString message);
+    Q_SIGNAL void eof();
 
 private:
     void onActivated(int socket);
