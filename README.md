@@ -94,12 +94,16 @@ or
 ### TestStub
 
 Simple test app that can be connected to gui through pipes:
+
     mkfifo f1 f2
     TestStub >f1 <f2 & cat <f1 >f2
+
 which can inject all types of message, and echoes anything sent back.
 To test the actual gui:
+
     mkfifo f1 f2
     TestStub >f1 <f2
     gui <f1 >f2
+
 or something similar.
 
