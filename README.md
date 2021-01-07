@@ -1,11 +1,11 @@
 # Mash-o-matiC
-Homebrew beer mash heater controller
+Homebrew beer mash heater controller (formerly known as the Beer-o-tron)
 
-This is the software that will run on a RPi with a small touch screen. Application written in Python3, using PyQT, with GUI written in QML (effectively Javascript).
+This is the software that will run on a RPi with a small very small screen. Application written in Python3, using PyQT, with GUI written in QML (effectively Javascript). Originally it was going to be a touch screen, but now its an Adafruit 2315 - 2.2" TFT screen with four push buttons. These will be more reliable with wet hands. https://www.adafruit.com/product/2315
 
 A script running periodically will read temperature from a number of sensors and create a live graph which the application will display in the background. Application will use the temperature readings to decide whether to turn on the heater and pump, according to a pre-set temperature profile (e.g. maintain 66'C for mashing).
 
-After getting nowhere with PyQT and QML, we decided to go with C++/QML for the GUI (almost no C++, mainly QML), piping "messages" (currently TBD, probably simple ASCII) to/from a separate python script which will do the clever controller things.
+After getting nowhere with PyQT and QML, we decided to go with C++/QML for the GUI (almost no C++, mainly QML), piping messages (simple text strings) to/from a separate python script which will do the clever controller things.
 
 The problem with PyQT was that we couldn't get the QML to import QT modules. There doesn't seem to be much online help for this - PyQT seems to create applications the old 'designer' way - instantiate widgets in the python and wire up the UI there, rather than letting QML do it. We probably missed a configuration or deployment step but it was taking too long with no results. Since I use Qt/C++/QML for work, a C++ app is a doddle, and the UI aspects of this aren't the interesting bits. With luck the UI will be trivial.
 
@@ -97,4 +97,9 @@ Simple test app that can be connected to gui through pipes:
     mkfifo f1 f2
     TestStub >f1 <f2 & cat <f1 >f2
 which can inject all types of message, and echoes anything sent back.
+To test the actual gui:
+    mkfifo f1 f2
+    TestStub >f1 <f2
+    gui <f1 >f2
+or something similar.
 
