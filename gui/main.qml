@@ -3,7 +3,7 @@ import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 import QtQuick.Window 2.12
 
-import Beer 1.0
+import Beer 1.0     // always a good idea!
 
 Window {
     id: window
@@ -49,15 +49,16 @@ Window {
         anchors.fill: parent
         color: "transparent"
 
-        property color c
-        onCChanged: {
-            if (c == "#00000000")
+        property color col
+        onColChanged: {
+            if (col == "#00000000")
                 color = "transparent"
             else
-                color = Qt.rgba(c.r, c.g, c.b, 0.33)
+                color = Qt.rgba(col.r, col.g, col.b, 0.33)
         }
     }
 
+    /* not using a touch screen any more
     // Allow a press and hold anywhere on the screen to trigger an action,
     // e.g emergency stop, or mode change
     MouseArea {
@@ -65,6 +66,7 @@ Window {
         anchors.fill: parent
         onPressAndHold: menu.screenPress()
     }
+    */
 
     Row {
         id: rightStatus
@@ -123,6 +125,13 @@ Window {
             height: iconSize
             width: iconSize
 
+            // Normally we toggle between 0 and 1, so the user sees a constantly
+            // changing heart, which is a good sign.
+            // If we loose comms, we switch to 2 (problem) and the user sees the
+            // flashing problem icon.
+            // 0 = solid heart
+            // 1 = hollow heart
+            // 2 = problem
             property int state: 0
 
             function heartbeat() {
@@ -131,8 +140,12 @@ Window {
             }
             function setSource() {
                 opacity = 1
-                if (state === 0) source = "qrc:/icons/heart_solid.svg"
-                else if (state === 1) source = "qrc:/icons/heart_border.svg"
+                if (state === 0) {
+                    source = "qrc:/icons/heart_solid.svg"
+                }
+                else if (state === 1) {
+                    source = "qrc:/icons/heart_border.svg"
+                }
                 else {
                     source = "qrc:/icons/problem.svg"
                 }
@@ -170,34 +183,6 @@ Window {
             text: "---"
         }
     }
-
-    /*
-    RowLayout {
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 20
-        anchors.horizontalCenter: parent.horizontalCenter
-
-        spacing: 20
-
-        Button {
-            text: "A"
-            onPressed: messages.send("a 9")
-        }
-
-        Button {
-            text: "B"
-            onPressed: messages.send("b 4.2")
-        }
-
-        Button {
-            text: "quit"
-            onPressed: {
-                messages.send("bye")
-                Qt.quit()
-            }
-        }
-    }
-    */
 
     RowLayout {
         id: topLevelMenu
@@ -331,29 +316,6 @@ Window {
             background: Rectangle { color: "red" }
         }
     }
-/*
-    /// @todo remove later - for testing
-    Rectangle {
-        id: rect
-        anchors.centerIn: parent
-        color: "red"
-        width: parent.width/3
-        height: parent.height/3
-
-        function toggle() {
-            if (color == "#0000ff")
-                color = "plum"
-            else
-                color = "blue"
-        }
-
-        Text {
-            text: "???"
-            id: label
-            anchors.centerIn: parent
-        }
-    }
-*/
 
     Item {
         id: menu
@@ -420,19 +382,14 @@ Window {
         message = message.trim()
         message = message.toLowerCase()
 
-        //label.text = message
-
         if (message === "hot") {
-            shade.c = "red"
+            shade.col = "red"
         }
         if (message === "cold") {
-            shade.c = "blue"
+            shade.col = "blue"
         }
         if (message === "ok") {
-            shade.c = "transparent"
-        }
-        if (message === "quit") {
-            Qt.quit()
+            shade.col = "transparent"
         }
         if (message.startsWith("pump")) {
             pump.visible = parameter(message) === "on"
@@ -453,6 +410,12 @@ Window {
         }
         if (message === "heartbeat") {
             heartbeat.gotReply()
+        }
+
+        // Why? What can we do? This is a full screen app on an embedded
+        // system. Should it ever quit? Maybe not.
+        if (message === "quit") {
+            Qt.quit()
         }
     }
 
