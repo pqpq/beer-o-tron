@@ -10,9 +10,10 @@ ApplicationWindow {
     visible: true
     title: qsTr("Test Stub for Mash-o-matiC")
 
-    property bool sendHeartbeats: true
+    property bool respondToHeartbeats: true
     property real temperature: 20
     property int time: 0
+    property var startTime: Date.now()
 
     ColumnLayout {
         anchors.fill: parent
@@ -29,7 +30,8 @@ ApplicationWindow {
                 "                  K - ok        - / + - change temperature\n" +
                 "                  S - stop      [ / ] - change time\n" +
                 "                  Q - quit      < / > - change time by 1 hour\n" +
-                "B - toggle sending heartbeats   space - toggle auto scroll\n"
+                "  B   - toggle responding to heartbeats\n" +
+                "space - toggle auto scroll\n"
         }
 
         Rectangle {
@@ -44,7 +46,7 @@ ApplicationWindow {
                 model: ListModel {}
                 delegate: Text {
                     font.family: "consolas"
-                    text: index + ' ' + value
+                    text: value
                 }
 
                 property bool autoScrollToEnd: true
@@ -58,7 +60,9 @@ ApplicationWindow {
                     if (s.endsWith('\n')) {
                         s = s.slice(0,-1)
                     }
-                    model.append({value:s})
+                    const time = Date.now() - startTime
+                    const seconds = time / 1000
+                    model.append({value: seconds.toFixed(3) + ' ' + s})
                     if (autoScrollToEnd) {
                         positionViewAtEnd()
                     }
@@ -69,12 +73,12 @@ ApplicationWindow {
         Keys.onPressed: {
             switch (event.key) {
             case Qt.Key_B:
-                sendHeartbeats = !sendHeartbeats
-                if (sendHeartbeats) {
-                    list.add("Sending heartbeats.")
+                respondToHeartbeats = !respondToHeartbeats
+                if (respondToHeartbeats) {
+                    list.add("Responding to heartbeats.")
                 }
                 else {
-                    list.add("Not sending heartbeats.")
+                    list.add("Ignoring heartbeats.")
                 }
                 event.accepted = true
                 break
@@ -153,7 +157,6 @@ ApplicationWindow {
         onSent: list.add("Tx: " + message)
         onEof: {
             list.add("Rx: EOF")
-            heartbeat.stop()
         }
 
         function sendOptional(message, event) {
@@ -164,16 +167,10 @@ ApplicationWindow {
         }
     }
 
-    Timer {
-        id: heartbeat
-        interval: 1000
-        repeat: true
-        running: sendHeartbeats
-
-        onTriggered: messages.send("heartbeat")
-    }
-
     function handle(message) {
         list.add("Rx: " + message)
+        if (message.trim() === "heartbeat" && respondToHeartbeats) {
+            messages.send(message)
+        }
     }
 }
