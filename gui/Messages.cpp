@@ -12,6 +12,7 @@ Messages::Messages(QObject *parent)
 void Messages::send(QString message)
 {
     std::cout << message.toStdString() << std::endl;
+    emit sent(message);
 }
 
 void Messages::onActivated(int /*socket*/)
