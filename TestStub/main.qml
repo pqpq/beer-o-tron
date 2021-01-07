@@ -28,7 +28,7 @@ ApplicationWindow {
                 "                  C - cold      E - heat      Ctrl-E - heat on\n" +
                 "                  K - ok        - / + - change temperature\n" +
                 "                  S - stop      [ / ] - change time\n" +
-                "                  Q - quit\n" +
+                "                  Q - quit      < / > - change time by 1 hour\n" +
                 "B - toggle sending heartbeats   space - toggle auto scroll\n"
         }
 
@@ -127,6 +127,18 @@ ApplicationWindow {
                 messages.send("time " + time)
                 event.accepted = true
                 break
+            case Qt.Key_Less:
+            case Qt.Key_Comma:
+                time -= 3600
+                messages.send("time " + time)
+                event.accepted = true
+                break
+            case Qt.Key_Greater:
+            case Qt.Key_Period:
+                time += 3600
+                messages.send("time " + time)
+                event.accepted = true
+                break
             case Qt.Key_Space:
                 list.autoScrollToEnd = !list.autoScrollToEnd
                 event.accepted = true
@@ -163,8 +175,5 @@ ApplicationWindow {
 
     function handle(message) {
         list.add("Rx: " + message)
-        //message = message.trim()
-        //message = message.toLowerCase()
     }
-
 }
