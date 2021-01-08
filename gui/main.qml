@@ -33,6 +33,27 @@ Window {
     property int statusFontSize: iconSize * 2/3
     property int statusFontWeight: Font.Bold
 
+    property ListModel presets: ListModel{}
+
+    signal button1
+    signal button2
+    signal button3
+    signal button4
+
+    onButton1: console.log("Button 1 was pressed")
+    onButton2: console.log("Button 2 was pressed")
+    onButton3: console.log("Button 3 was pressed")
+    onButton4: console.log("Button 4 was pressed")
+    Connections {
+        target: presets
+        onCountChanged: {
+            console.log("presets:", presets)
+            for (let i = 0; i < presets.count; i++) {
+                console.log("  ",i,JSON.stringify(presets.get(i)))
+            }
+        }
+    }
+
     Messages {
         id: messages
         onReceived: handle(message)
@@ -170,7 +191,7 @@ Window {
                 repeat: true
                 onTriggered: status.opacity = status.opacity ? 0 : 1
             }
-            onStateChanged: console.log("state=", state)
+            //onStateChanged: console.log("state=", state)
         }
     }
 
@@ -318,7 +339,7 @@ Window {
             text: "EMERGENCY STOP"
             onPressed: {
                 console.log("STOP")
-                messages.send("stop")
+                messages.send("allstop")
                 menu.state = "top"
             }
             background: Rectangle { color: "red" }
@@ -419,6 +440,21 @@ Window {
         if (message === "heartbeat") {
             heartbeat.gotReply()
         }
+        if (message === "button 1") {
+            button1()
+        }
+        if (message === "button 2") {
+            button2()
+        }
+        if (message === "button 3") {
+            button3()
+        }
+        if (message === "button 4") {
+            button4()
+        }
+        if (message.startsWith("preset")) {
+            parsePreset(message)
+        }
 
         // Why? What can we do? This is a full screen app on an embedded
         // system. Should it ever quit? Maybe not.
@@ -463,5 +499,22 @@ Window {
         }
 
         return formattedTime
+    }
+
+    function parsePreset(preset) {
+        //console.log("parsePreset(" + preset + ")")
+
+        let name = ""
+        let description = ""
+
+        const parts = preset.split('"')
+        if (parts.length > 1) {
+            name = parts[1]
+        }
+        if (parts.length > 3) {
+            description = parts[3]
+        }
+
+        presets.append({"name":name, "description":description})
     }
 }

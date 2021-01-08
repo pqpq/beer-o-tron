@@ -25,11 +25,13 @@ ApplicationWindow {
             Layout.fillWidth: true
             font.family: "consolas"
             text:
-                "Send messages:    H - hot       P - pump      Ctrl-P - pump on\n" +
-                "                  C - cold      E - heat      Ctrl-E - heat on\n" +
-                "                  K - ok        - / + - change temperature\n" +
-                "                  S - stop      [ / ] - change time\n" +
-                "                  Q - quit      < / > - change time by 1 hour\n" +
+                "Send messages:      H - hot       P - pump      Ctrl-P - pump on\n" +
+                "                    C - cold      E - heat      Ctrl-E - heat on\n" +
+                "    1 - button 1    K - ok        - / + - change temperature\n" +
+                "    2 - button 2    S - stop      [ / ] - change time\n" +
+                "    3 - button 3    Q - quit      < / > - change time by 1 hour\n" +
+                "    4 - button 4    L - hard coded list of presets\n" +
+                "\n" +
                 "  B   - toggle responding to heartbeats\n" +
                 "space - toggle auto scroll\n"
         }
@@ -72,6 +74,22 @@ ApplicationWindow {
 
         Keys.onPressed: {
             switch (event.key) {
+            case Qt.Key_1:
+                messages.send("button 1")
+                event.accepted = true
+                break
+            case Qt.Key_2:
+                messages.send("button 2")
+                event.accepted = true
+                break
+            case Qt.Key_3:
+                messages.send("button 3")
+                event.accepted = true
+                break
+            case Qt.Key_4:
+                messages.send("button 4")
+                event.accepted = true
+                break
             case Qt.Key_B:
                 respondToHeartbeats = !respondToHeartbeats
                 if (respondToHeartbeats) {
@@ -96,6 +114,16 @@ ApplicationWindow {
                 break
             case Qt.Key_K:
                 messages.send("ok")
+                event.accepted = true
+                break
+            case Qt.Key_L:
+                messages.send("preset \"one\" \"blah blah blah\"")
+                messages.send("preset \"two\" \"blah blah blah\"")
+                messages.send("preset \"three 3\"")
+                messages.send("preset \"no closing quote")
+                messages.send("preset \"fore\"\"no closing quote and no space separating")
+                messages.send("preset noquotes")
+                messages.send("preset \"my mash\" \"55' rest\"")
                 event.accepted = true
                 break
             case Qt.Key_P:
