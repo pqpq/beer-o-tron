@@ -15,5 +15,8 @@
         <file>icons/problem.svg</file>
         <file>icons/heart_solid.svg</file>
         <file>icons/heart_border.svg</file>
+        <file>icons/remove.svg</file>
+        <file>icons/add.svg</file>
+        <file>icons/stop.svg</file>
     </qresource>
 </RCC>
