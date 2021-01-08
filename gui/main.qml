@@ -1,22 +1,27 @@
-﻿import QtQuick 2.12
+﻿// Where are we going to show the name of the pre-set we're running?
+// When you press a button, when its idle (but running).
+// This should also bring up the option to do an emergency stop, as well as whatever else.
+
+import QtQuick 2.12
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 import QtQuick.Window 2.12
 
 import Beer 1.0     // always a good idea!
 
+// Expected QQmlContext properties:
+// bool testing : whether we're windowed, for testing, or full screen
+// string pathToGraph : the path to the background image
+
 Window {
     id: window
     visible: true
 
-    ////////////////////////////////////////////////
-    // Just for testing
-    //visibility: "FullScreen"
+    visibility: testing ? "Windowed" : "FullScreen"
     width: 640
     height: 480
-    ///////////////////////////////////////////////
 
-    //flags: Qt.FramelessWindowHint
+    flags: testing ? Qt.Window : Qt.FramelessWindowHint
 
     title: qsTr("Mash-o-MatiC")
 
@@ -33,12 +38,15 @@ Window {
         onReceived: handle(message)
     }
 
+    /// @todo need a mechanism to update this.
+    /// Timer? Message? QFileSystemWatcher ?
+
     // Background image. Normally the live temperature graph.
     // Can be a splash screen at startup, etc. etc.
     Image {
         id: background
         anchors.fill: parent
-        source: "file:./../data/graph.png"
+        source: pathToGraph
     }
 
     // Part transparent rectangle overlaying the background image so we can
