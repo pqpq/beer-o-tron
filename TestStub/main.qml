@@ -29,7 +29,7 @@ ApplicationWindow {
                 "                    C - cold      E - heat      Ctrl-E - heat on\n" +
                 "    1 - button 1    K - ok        - / + - change temperature\n" +
                 "    2 - button 2    S - stop      [ / ] - change time\n" +
-                "    3 - button 3    Q - quit      < / > - change time by 1 hour\n" +
+                "    3 - button 3                  < / > - change time by 1 hour\n" +
                 "    4 - button 4    L - hard coded list of presets\n" +
                 "\n" +
                 "  B   - toggle responding to heartbeats\n" +
@@ -128,10 +128,6 @@ ApplicationWindow {
                 break
             case Qt.Key_P:
                 messages.sendOptional("pump", event)
-                event.accepted = true
-                break
-            case Qt.Key_Q:
-                messages.send("quit")
                 event.accepted = true
                 break
             case Qt.Key_S:

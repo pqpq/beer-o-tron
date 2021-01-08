@@ -9,7 +9,6 @@ Message|Parameters|Meaning
 `hot` | | Sensor temperature is hotter than permitted.
 `cold` | | Sensor temperature is colder than permitted.
 `ok` | | Sensor temperature is within permitted bounds.
-`quit` | | Terminate GUI application
 `pump` | [on] | Pump status. Any parameter other than 'on', or no parameter, signifies off.
 `heat` | [on] | Heater status. Any parameter other than 'on', or no parameter, signifies off.
 `time` | *seconds* | Time update.<br> *seconds* : (int) number of seconds since the run started.

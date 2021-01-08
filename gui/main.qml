@@ -3,9 +3,6 @@
 // This should also bring up the option to do an emergency stop, as well as whatever else.
 
 
-/// @todo
-/// Setting "transparent" in state transitions might remove effect of previous "hot" or "cold" messages
-
 import QtQuick 2.12
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
@@ -64,6 +61,7 @@ Window {
         id: background
         anchors.fill: parent
         source: pathToGraph
+        opacity: buttons.visible ? 0.33 : 1
     }
 
     // Part transparent rectangle overlaying the background image so we can
@@ -82,16 +80,6 @@ Window {
                 color = Qt.rgba(col.r, col.g, col.b, 0.33)
         }
     }
-
-    /* not using a touch screen any more
-    // Allow a press and hold anywhere on the screen to trigger an action,
-    // e.g emergency stop, or mode change
-    MouseArea {
-        id: wholeScreen
-        anchors.fill: parent
-        onPressAndHold: menu.screenPress()
-    }
-    */
 
     Row {
         id: rightStatus
@@ -319,7 +307,6 @@ Window {
                 PropertyChanges { target: button2; icon.source: "qrc:/icons/timeline.svg" }
                 PropertyChanges { target: button3; icon.source: "" /* "qrc:/icons/timeline_add.svg" */ }
                 PropertyChanges { target: button4; icon.source: "qrc:/icons/stop.svg" }
-                PropertyChanges { target: shade; col: "white" }
                 PropertyChanges { target: temperatureSetter; visible: false }
 
                 readonly property var actions: [menu.noAction, menu.noAction, menu.noAction, function(){ messages.send("allstop")}]
@@ -328,7 +315,6 @@ Window {
             State {
                 name: "running"
                 PropertyChanges { target: buttons; visible: false }
-                PropertyChanges { target: shade; col: "transparent" }
                 PropertyChanges { target: temperatureSetter; visible: false }
 
                 function nextStateForButtonPress(button) {
@@ -342,7 +328,6 @@ Window {
                 PropertyChanges { target: button2; icon.source: "qrc:/icons/remove.svg" }
                 PropertyChanges { target: button3; icon.source: "qrc:/icons/add.svg"}
                 PropertyChanges { target: button4; icon.source: "qrc:/icons/check.svg" }
-                PropertyChanges { target: shade; col: "white" }
                 PropertyChanges { target: temperatureSetter; visible: true }
 
                 readonly property var actions: [menu.noAction, temperatureSetter.decrease, temperatureSetter.increase, temperatureSetter.set]
@@ -351,21 +336,12 @@ Window {
             State {
                 name: "set.run"
                 PropertyChanges { target: buttons; visible: false }
-                PropertyChanges { target: shade; col: "transparent" }
                 PropertyChanges { target: temperatureSetter; visible: false }
                 function nextStateForButtonPress(button) {
                     return "set.temperature"
                 }
             }
         ]
-
-        /* no touch screen
-        function screenPress() {
-            //rect.toggle()
-            if (state == "set.run")
-                state = "set.menu"
-        }
-        */
 
         function getCurrentStateObject() {
             for (let i = 0; i < states.length; ++i) {
@@ -474,12 +450,6 @@ Window {
         }
         if (message.startsWith("preset")) {
             parsePreset(message)
-        }
-
-        // Why? What can we do? This is a full screen app on an embedded
-        // system. Should it ever quit? Maybe not.
-        if (message === "quit") {
-            Qt.quit()
         }
     }
 
