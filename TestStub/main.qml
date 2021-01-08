@@ -124,6 +124,9 @@ ApplicationWindow {
                 messages.send("preset \"fore\"\"no closing quote and no space separating")
                 messages.send("preset noquotes")
                 messages.send("preset \"my mash\" \"55' rest\"")
+                messages.send("preset \"blah\" \"whatever\"")
+                messages.send("preset \"quite a long name\" \"some sort of description\"")
+                messages.send("preset \"mash.txt\" \"0934098092357\"")
                 event.accepted = true
                 break
             case Qt.Key_P:

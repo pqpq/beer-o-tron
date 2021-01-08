@@ -37,15 +37,15 @@ Window {
 
     property ListModel presets: ListModel{}
 
-    Connections {
-        target: presets
-        onCountChanged: {
-            console.log("presets:", presets)
-            for (let i = 0; i < presets.count; i++) {
-                console.log("  ",i,JSON.stringify(presets.get(i)))
-            }
-        }
-    }
+//    Connections {
+//        target: presets
+//        onCountChanged: {
+//            console.log("presets:", presets)
+//            for (let i = 0; i < presets.count; i++) {
+//                console.log("  ",i,JSON.stringify(presets.get(i)))
+//            }
+//        }
+//    }
 
     Messages {
         id: messages
@@ -296,6 +296,54 @@ Window {
         }
     }
 
+    ListView {
+        id: presetList
+
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: rightStatus.bottom
+        width: parent.width / 2
+        height: parent.height * 0.6
+        clip: true
+
+        model: presets
+
+        onVisibleChanged: ensureSelectionIsVisible()
+
+        function repopulate() {
+            presets.clear()
+            messages.send("list")
+        }
+        function down() {
+            if (currentIndex < model.count-1)
+                currentIndex++
+            ensureSelectionIsVisible()
+        }
+        function up() {
+            if (currentIndex > 0)
+                currentIndex--
+            ensureSelectionIsVisible()
+        }
+        function select() {
+            let obj = model.get(currentIndex)
+            messages.send("run \"" + obj.name + '"')
+        }
+        function ensureSelectionIsVisible() {
+            positionViewAtIndex(currentIndex, ListView.Contain)
+        }
+
+        delegate: Text {
+            font.bold: ListView.isCurrentItem
+            font.pixelSize: buttonSize / 2
+            text: name
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            z: -1
+            color: "yellow"
+        }
+    }
+
     Item {
         id: menu
         state: "top"
@@ -308,14 +356,16 @@ Window {
                 PropertyChanges { target: button3; icon.source: "" /* "qrc:/icons/timeline_add.svg" */ }
                 PropertyChanges { target: button4; icon.source: "qrc:/icons/stop.svg" }
                 PropertyChanges { target: temperatureSetter; visible: false }
+                PropertyChanges { target: presetList; visible: false }
 
-                readonly property var actions: [menu.noAction, menu.noAction, menu.noAction, function(){ messages.send("allstop")}]
-                readonly property var nextStates: ["set.temperature", "", "", ""]
+                readonly property var actions: [menu.noAction, presetList.repopulate, menu.noAction, function(){ messages.send("allstop")}]
+                readonly property var nextStates: ["set.temperature", "preset.choose", "", ""]
             },
             State {
                 name: "running"
                 PropertyChanges { target: buttons; visible: false }
                 PropertyChanges { target: temperatureSetter; visible: false }
+                PropertyChanges { target: presetList; visible: false }
 
                 function nextStateForButtonPress(button) {
                     return "top"
@@ -329,6 +379,7 @@ Window {
                 PropertyChanges { target: button3; icon.source: "qrc:/icons/add.svg"}
                 PropertyChanges { target: button4; icon.source: "qrc:/icons/check.svg" }
                 PropertyChanges { target: temperatureSetter; visible: true }
+                PropertyChanges { target: presetList; visible: false }
 
                 readonly property var actions: [menu.noAction, temperatureSetter.decrease, temperatureSetter.increase, temperatureSetter.set]
                 readonly property var nextStates: ["top", "", "", "set.run"]
@@ -337,8 +388,31 @@ Window {
                 name: "set.run"
                 PropertyChanges { target: buttons; visible: false }
                 PropertyChanges { target: temperatureSetter; visible: false }
+                PropertyChanges { target: presetList; visible: false }
                 function nextStateForButtonPress(button) {
                     return "set.temperature"
+                }
+            },
+            State {
+                name: "preset.choose"
+                PropertyChanges { target: buttons; visible: true }
+                PropertyChanges { target: button1; icon.source: "qrc:/icons/close.svg" }
+                PropertyChanges { target: button2; icon.source: "qrc:/icons/down.svg" }
+                PropertyChanges { target: button3; icon.source: "qrc:/icons/up.svg"}
+                PropertyChanges { target: button4; icon.source: "qrc:/icons/check.svg" }
+                PropertyChanges { target: temperatureSetter; visible: false }
+                PropertyChanges { target: presetList; visible: true }
+
+                readonly property var actions: [menu.noAction, presetList.down, presetList.up, presetList.select]
+                readonly property var nextStates: ["top", "", "", "preset.run"]
+            },
+            State {
+                name: "preset.run"
+                PropertyChanges { target: buttons; visible: false }
+                PropertyChanges { target: temperatureSetter; visible: false }
+                PropertyChanges { target: presetList; visible: false }
+                function nextStateForButtonPress(button) {
+                    return "preset.choose"
                 }
             }
         ]
@@ -505,6 +579,8 @@ Window {
             description = parts[3]
         }
 
-        presets.append({"name":name, "description":description})
+        if (!!name) {
+            presets.append({"name":name, "description":description})
+        }
     }
 }
