@@ -2,6 +2,10 @@
 // When you press a button, when its idle (but running).
 // This should also bring up the option to do an emergency stop, as well as whatever else.
 
+
+/// @todo
+/// Setting "transparent" in state transitions might remove effect of previous "hot" or "cold" messages
+
 import QtQuick 2.12
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
@@ -29,21 +33,13 @@ Window {
     // development, and small screen on RPi.
     property int iconSize: height / 10
     property int statusIconSpacing: iconSize / 4
-    property int menuIconSpacing: iconSize / 2
     property int statusFontSize: iconSize * 2/3
     property int statusFontWeight: Font.Bold
 
+    property int buttonSize: window.width / 8
+
     property ListModel presets: ListModel{}
 
-    signal button1
-    signal button2
-    signal button3
-    signal button4
-
-    onButton1: console.log("Button 1 was pressed")
-    onButton2: console.log("Button 2 was pressed")
-    onButton3: console.log("Button 3 was pressed")
-    onButton4: console.log("Button 4 was pressed")
     Connections {
         target: presets
         onCountChanged: {
@@ -213,136 +209,102 @@ Window {
         }
     }
 
+    // Position 4 buttons along the bottom of the screen to line up with the
+    // push buttons on the Adafruit 2315 screen.
+    // Icons are set depending on the state.
+    // We use RoundButton because the appearance is good, but there's no way
+    // to press them without a touch screen. Presses are simulated by linking
+    // to incoming messages. We emit signals in onClicked() so we can test
+    // with a mouse.
     RowLayout {
-        id: topLevelMenu
-        anchors.centerIn: parent
-        spacing: window.menuIconSpacing
+        id: buttons
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.margins: buttonSize / 4
+        spacing: buttonSize
 
         RoundButton {
-            icon.source: "qrc:/icons/thermometer.svg"
-            icon.width: window.iconSize
-            icon.height: window.iconSize
-            onPressed: {
-                console.log("set temperature")
-                menu.state = "set.change"
-            }
+            id: button1
+            visible: icon.source != ""
+            icon.width: buttonSize
+            icon.height: buttonSize
+            onClicked: menu.buttonPressed(1)
         }
-        RoundButton {
-            icon.source: "qrc:/icons/timeline.svg"
-            icon.width: window.iconSize
-            icon.height: window.iconSize
-            onPressed: console.log("profiles")
+        Item {
+            id: button1NotVisibleSpacer
+            width: buttonSize
+            height: buttonSize
+            visible:!button1.visible
         }
+
         RoundButton {
-            icon.source: "qrc:/icons/timeline_add.svg"
-            icon.width: window.iconSize
-            icon.height: window.iconSize
-            onPressed: console.log("create profile")
+            id: button2
+            visible: icon.source != ""
+            icon.width: buttonSize
+            icon.height: buttonSize
+            onClicked: menu.buttonPressed(2)
         }
+        Item {
+            id: button2NotVisibleSpacer
+            width: buttonSize
+            height: buttonSize
+            visible:!button2.visible
+        }
+
         RoundButton {
-            icon.source: "qrc:/icons/power.svg"
-            icon.width: window.iconSize
-            icon.height: window.iconSize
-            onPressed: {
-                messages.send("bye")
-                console.log("quit")
-                Qt.quit()
-            }
+            id: button3
+            visible: icon.source != ""
+            icon.width: buttonSize
+            icon.height: buttonSize
+            onClicked: menu.buttonPressed(3)
+        }
+        Item {
+            id: button3NotVisibleSpacer
+            width: buttonSize
+            height: buttonSize
+            visible:!button3.visible
+        }
+
+        RoundButton {
+            id: button4
+            visible: icon.source != ""
+            icon.width: buttonSize
+            icon.height: buttonSize
+            onClicked: menu.buttonPressed(4)
+        }
+        Item {
+            id: button4NotVisibleSpacer
+            width: buttonSize
+            height: buttonSize
+            visible:!button4.visible
         }
     }
 
-    ColumnLayout {
-        id: setChangeMenu
+    Rectangle {
+        id: temperatureSetter
         anchors.centerIn: parent
 
-        SpinBox {
-            id: temperatureSpinner
-            from: 20 * 10
-            value: 666
-            to: 100 * 10
-            stepSize: 1
+        property int decimals: 1
+        property real value: 66.6
+        property string valueString: Number(value).toLocaleString(Qt.locale(), 'f', decimals)
 
-            onValueChanged: console.log("temperatureSpinner value=", value)
-
-            /// @todo remember value when made visible, so cancel can work.
-            property int decimals: 1
-            property real realValue: value / 10
-            property real previousValue: 0
-
-            onVisibleChanged: {
-                console.log("temperatureSpinner visible=", visible)
-                previousValue = realValue
-                value = realValue * 10
-            }
-
-            function cancel() {
-                realValue = previousValue
-            }
-
-            function accept() {
-                previousValue = realValue
-            }
-
-            validator: DoubleValidator {
-                bottom: Math.min(temperatureSpinner.from, temperatureSpinner.to)
-                top:  Math.max(temperatureSpinner.from, temperatureSpinner.to)
-            }
-
-            textFromValue: function(value, locale) {
-                return Number(value / 10).toLocaleString(locale, 'f', temperatureSpinner.decimals)
-            }
-
-            valueFromText: function(text, locale) {
-                return Number.fromLocaleString(locale, text) * 10
-            }
+        function decrease() {
+            value -= 1.0
         }
 
-        RoundButton {
-            icon.source: "qrc:/icons/check.svg"
-            onPressed: {
-                console.log("OK", temperatureSpinner.realValue)
-                temperatureSpinner.accept()
-                menu.state = "set.run"
-                messages.send("set " + temperatureSpinner.realValue.toString())
-            }
+        function increase() {
+            value += 1.0
         }
-        RoundButton {
-            icon.source: "qrc:/icons/close.svg"
-            onPressed: {
-                console.log("X")
-                temperatureSpinner.cancel()
 
-                // this needs to go to setMenu if we're running
-                menu.state = "top"
-            }
+        function set() {
+            messages.send("set " + valueString)
         }
-    }
 
-    ColumnLayout {
-        id: setMenu
-        anchors.centerIn: parent
-        RoundButton {
-            icon.source: "qrc:/icons/settings.svg"
-            onPressed: {
-                console.log("Change temperature")
-                menu.state = "set.change"
-            }
-        }
-        RoundButton {
-            icon.source: "qrc:/icons/menu.svg"
-            onPressed: {
-                console.log("Main menu")
-                menu.state = "top"
-            }
-        }
-        Button {
-            text: "EMERGENCY STOP"
-            onPressed: {
-                console.log("STOP")
-                messages.send("allstop")
-                menu.state = "top"
-            }
-            background: Rectangle { color: "red" }
+        Text {
+            anchors.centerIn: parent
+            font.pixelSize: buttonSize
+            font.bold: true
+            text: parent.valueString + "°C"
         }
     }
 
@@ -352,36 +314,94 @@ Window {
         states: [
             State {
                 name: "top"
-                PropertyChanges { target: topLevelMenu; visible: true }
-                PropertyChanges { target: setChangeMenu; visible: false }
-                PropertyChanges { target: setMenu; visible: false }
-            },
+                PropertyChanges { target: buttons; visible: true }
+                PropertyChanges { target: button1; icon.source: "qrc:/icons/thermometer.svg" }
+                PropertyChanges { target: button2; icon.source: "qrc:/icons/timeline.svg" }
+                PropertyChanges { target: button3; icon.source: "" /* "qrc:/icons/timeline_add.svg" */ }
+                PropertyChanges { target: button4; icon.source: "qrc:/icons/stop.svg" }
+                PropertyChanges { target: shade; col: "white" }
+                PropertyChanges { target: temperatureSetter; visible: false }
 
+                readonly property var actions: [menu.noAction, menu.noAction, menu.noAction, function(){ messages.send("allstop")}]
+                readonly property var nextStates: ["set.temperature", "", "", ""]
+            },
             State {
-                name: "set.change"
-                PropertyChanges { target: topLevelMenu; visible: false }
-                PropertyChanges { target: setChangeMenu; visible: true }
-                PropertyChanges { target: setMenu; visible: false }
+                name: "running"
+                PropertyChanges { target: buttons; visible: false }
+                PropertyChanges { target: shade; col: "transparent" }
+                PropertyChanges { target: temperatureSetter; visible: false }
+
+                function nextStateForButtonPress(button) {
+                    return "top"
+                }
+            },
+            State {
+                name: "set.temperature"
+                PropertyChanges { target: buttons; visible: true }
+                PropertyChanges { target: button1; icon.source: "qrc:/icons/close.svg" }
+                PropertyChanges { target: button2; icon.source: "qrc:/icons/remove.svg" }
+                PropertyChanges { target: button3; icon.source: "qrc:/icons/add.svg"}
+                PropertyChanges { target: button4; icon.source: "qrc:/icons/check.svg" }
+                PropertyChanges { target: shade; col: "white" }
+                PropertyChanges { target: temperatureSetter; visible: true }
+
+                readonly property var actions: [menu.noAction, temperatureSetter.decrease, temperatureSetter.increase, temperatureSetter.set]
+                readonly property var nextStates: ["top", "", "", "set.run"]
             },
             State {
                 name: "set.run"
-                PropertyChanges { target: topLevelMenu; visible: false }
-                PropertyChanges { target: setChangeMenu; visible: false }
-                PropertyChanges { target: setMenu; visible: false }
-            },
-            State {
-                name: "set.menu"
-                PropertyChanges { target: topLevelMenu; visible: false }
-                PropertyChanges { target: setChangeMenu; visible: false }
-                PropertyChanges { target: setMenu; visible: true }
+                PropertyChanges { target: buttons; visible: false }
+                PropertyChanges { target: shade; col: "transparent" }
+                PropertyChanges { target: temperatureSetter; visible: false }
+                function nextStateForButtonPress(button) {
+                    return "set.temperature"
+                }
             }
         ]
 
+        /* no touch screen
         function screenPress() {
             //rect.toggle()
             if (state == "set.run")
                 state = "set.menu"
         }
+        */
+
+        function getCurrentStateObject() {
+            for (let i = 0; i < states.length; ++i) {
+                if (menu.states[i].name === menu.state) {
+                    return menu.states[i]
+                }
+            }
+            console.error("Couldn't find the current state for '"+menu.state+"'!")
+            return menu.states[0]   // top
+        }
+
+        function buttonPressed(button) {
+            if (button < 1 || button > 4)
+                return
+
+            let state = getCurrentStateObject()
+
+            if (typeof state.actions !== "undefined") {
+                state.actions[button - 1]()
+            }
+
+            let nextState = ""
+            if (typeof state.nextStates !== "undefined") {
+                // fixed state change logic can be looked up in a table
+                nextState = state.nextStates[button - 1]
+            }
+            else {
+                // complex logic is encapsulated in a function
+                nextState = state.nextStateForButtonPress(button)
+            }
+            if (nextState !== "") {
+                menu.state = nextState
+            }
+        }
+
+        function noAction() {}
     }
 
     Timer {
@@ -441,16 +461,16 @@ Window {
             heartbeat.gotReply()
         }
         if (message === "button 1") {
-            button1()
+            menu.buttonPressed(1)
         }
         if (message === "button 2") {
-            button2()
+            menu.buttonPressed(2)
         }
         if (message === "button 3") {
-            button3()
+            menu.buttonPressed(3)
         }
         if (message === "button 4") {
-            button4()
+            menu.buttonPressed(4)
         }
         if (message.startsWith("preset")) {
             parsePreset(message)
