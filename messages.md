@@ -15,7 +15,10 @@ Message|Parameters|Meaning
 `time` | *seconds* | Time update.<br> *seconds* : (int) number of seconds since the run started.
 `stop` | | Hide the run timer.
 `temp` | *degrees* | Temperature update.<br> *degrees* : (float) current sensor temperature in degrees Centigrade. 
-`hearbeat` | | Response to a heartbeat from the GUI. Never sent unrequested.
+`heartbeat` | | Response to a heartbeat from the GUI. Never sent unrequested.
+`preset` | *name* *details* | A pre-set temperature profile.<br>*name* is a short name delimited with double quotes.<br>*details* is a longer description delimited with double quotes.
+`button` | *number* | Button *number* was pressed.<br>Buttons are numbered 1-4, from left to right.
+
 
 ## From GUI
 
@@ -24,4 +27,6 @@ Message|Parameters|Meaning
 `bye` | | GUI is shutting down.
 `heartbeat` | | GUI wants to check the core is there.
 `set` | *degrees* | Maintain a set temperature.<br> *degrees* : (float) The temperature to maintain in degrees Centigrade. 
-`stop` |  | Stop heat and pump immediately.
+`allstop` |  | Stop heat and pump immediately.
+`list` |  | Request the list of pre-set profiles.<br>When this is sent the GUI clears its list, so any `preset` messages will populate the new list rather than overwrite the old.
+`run` | *name* | Run the pre-set temperature profile called *name*.
