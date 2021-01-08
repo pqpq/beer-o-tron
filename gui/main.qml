@@ -2,6 +2,22 @@
 // When you press a button, when its idle (but running).
 // This should also bring up the option to do an emergency stop, as well as whatever else.
 
+/// @todo:
+
+/*
+When returning from a running page, should go to intermediate page which just
+has menu and emergency stop buttons.
+This should show the preset temp, or name of the preset.
+Menu button goes back to settings for that mode.
+Emergency stop stops everything -> top level menu
+*/
+
+/*
+  When you select a preset, next page shows name and details, with confirm
+  or back buttons
+  */
+
+/* handle new "image" message */
 
 import QtQuick 2.12
 import QtQuick.Controls 2.4
@@ -36,16 +52,6 @@ Window {
     property int buttonSize: window.width / 8
 
     property ListModel presets: ListModel{}
-
-//    Connections {
-//        target: presets
-//        onCountChanged: {
-//            console.log("presets:", presets)
-//            for (let i = 0; i < presets.count; i++) {
-//                console.log("  ",i,JSON.stringify(presets.get(i)))
-//            }
-//        }
-//    }
 
     Messages {
         id: messages
@@ -274,14 +280,19 @@ Window {
 
         property int decimals: 1
         property real value: 66.6
+        readonly property real step: 0.1
         property string valueString: Number(value).toLocaleString(Qt.locale(), 'f', decimals)
 
         function decrease() {
-            value -= 1.0
+            if (value > 20.0) {
+                value -= step
+            }
         }
 
         function increase() {
-            value += 1.0
+            if (value < (80.0 - step)) {
+                value += step
+            }
         }
 
         function set() {
@@ -428,6 +439,8 @@ Window {
         }
 
         function buttonPressed(button) {
+            //console.log("buttonPressed(" + button + ")")
+
             if (button < 1 || button > 4)
                 return
 
@@ -510,17 +523,8 @@ Window {
         if (message === "heartbeat") {
             heartbeat.gotReply()
         }
-        if (message === "button 1") {
-            menu.buttonPressed(1)
-        }
-        if (message === "button 2") {
-            menu.buttonPressed(2)
-        }
-        if (message === "button 3") {
-            menu.buttonPressed(3)
-        }
-        if (message === "button 4") {
-            menu.buttonPressed(4)
+        if (message.startsWith("button")) {
+            parseButton(message)
         }
         if (message.startsWith("preset")) {
             parsePreset(message)
@@ -581,6 +585,72 @@ Window {
 
         if (!!name) {
             presets.append({"name":name, "description":description})
+        }
+    }
+
+    Timer {
+        id: buttonPressAndHoldTimer
+        interval: 100
+        running: false
+        repeat: true
+
+        //onRunningChanged: console.log("buttonPressAndHoldTimer running=", running)
+
+        property var counts: [0,0,0,0]
+        property var pressed: [false, false, false, false]
+
+        function buttonUpdate(button, isPressed) {
+            //console.log("buttonPressAndHoldTimer.buttonUpdate(" + button + ", " + isPressed + ")")
+            if (0 < button && button < 5) {
+                pressed[button-1] = isPressed
+                counts[button-1] = 0
+                if (isPressed) {
+                    menu.buttonPressed(button)
+                    start()
+                }
+                else {
+                    const anyPressed = pressed[0] || pressed[1] || pressed[2] || pressed[3]
+                    if (!anyPressed) {
+                        stop()
+                    }
+                }
+            }
+
+            //for (let i = 0; i < 4; i++) {
+            //    console.log("  ", i, pressed[i], counts[i])
+            //}
+        }
+
+        onTriggered: {
+            //console.log("buttonPressAndHoldTimer.onTriggered()")
+            for (let i = 0; i < 4; i++) {
+                if (pressed[i]) {
+                    counts[i]++
+
+                    // auto repeat
+                    if (counts[i] > 5) {
+                        menu.buttonPressed(i+1)
+                    }
+
+                    // increase speed of autorepeat after 2 seconds
+                    if (counts[i] > (2 * 1000/interval)) {
+                        menu.buttonPressed(i+1)
+                        menu.buttonPressed(i+1)
+                        menu.buttonPressed(i+1)
+                        menu.buttonPressed(i+1)
+                    }
+                }
+                //console.log("  ", i, pressed[i], counts[i])
+            }
+        }
+    }
+
+    function parseButton(message) {
+        const parts = message.split(' ')
+        if (parts.length === 3) {
+            const button = parseInt(parts[1])
+            const isPressed = parts[2] === "down"
+            buttonPressAndHoldTimer.buttonUpdate(button, isPressed)
         }
     }
 }

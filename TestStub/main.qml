@@ -27,13 +27,38 @@ ApplicationWindow {
             text:
                 "Send messages:      H - hot       P - pump      Ctrl-P - pump on\n" +
                 "                    C - cold      E - heat      Ctrl-E - heat on\n" +
-                "    1 - button 1    K - ok        - / + - change temperature\n" +
-                "    2 - button 2    S - stop      [ / ] - change time\n" +
-                "    3 - button 3                  < / > - change time by 1 hour\n" +
-                "    4 - button 4    L - hard coded list of presets\n" +
+                "                    K - ok        - / + - change temperature\n" +
+                "                    S - stop      [ / ] - change time\n" +
+                "                                  < / > - change time by 1 hour\n" +
+                "                    L - hard coded list of presets\n" +
                 "\n" +
                 "  B   - toggle responding to heartbeats\n" +
                 "space - toggle auto scroll\n"
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 20
+            Button {
+                text: "1"
+                onPressed: messages.send("button 1 down")
+                onReleased: messages.send("button 1 up")
+            }
+            Button {
+                text: "2"
+                onPressed: messages.send("button 2 down")
+                onReleased: messages.send("button 2 up")
+            }
+            Button {
+                text: "3"
+                onPressed: messages.send("button 3 down")
+                onReleased: messages.send("button 3 up")
+            }
+            Button {
+                text: "4"
+                onPressed: messages.send("button 4 down")
+                onReleased: messages.send("button 4 up")
+            }
         }
 
         Rectangle {
@@ -74,22 +99,6 @@ ApplicationWindow {
 
         Keys.onPressed: {
             switch (event.key) {
-            case Qt.Key_1:
-                messages.send("button 1")
-                event.accepted = true
-                break
-            case Qt.Key_2:
-                messages.send("button 2")
-                event.accepted = true
-                break
-            case Qt.Key_3:
-                messages.send("button 3")
-                event.accepted = true
-                break
-            case Qt.Key_4:
-                messages.send("button 4")
-                event.accepted = true
-                break
             case Qt.Key_B:
                 respondToHeartbeats = !respondToHeartbeats
                 if (respondToHeartbeats) {
