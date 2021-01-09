@@ -34,22 +34,22 @@ import QtQuick.Window 2.12
 import Beer 1.0     // always a good idea!
 
 // Expected QQmlContext properties:
-// bool testing : whether we're windowed, for testing, or full screen
-// string pathToGraph : the path to the background image
+// bool runWindowed : whether we're windowed (for testing), or full screen.
+
 
 Window {
     id: window
     visible: true
 
-    visibility: testing ? "Windowed" : "FullScreen"
+    visibility: runWindowed ? "Windowed" : "FullScreen"
     width: 640
     height: 480
 
-    flags: testing ? Qt.Window : Qt.FramelessWindowHint
+    flags: runWindowed ? Qt.Window : Qt.FramelessWindowHint
 
     title: qsTr("Mash-o-MatiC")
 
-    // scale everything with screen size so it works on large screen during
+    // Scale everything with screen size so it works on large screen during
     // development, and small screen on RPi.
     property int iconSize: height / 10
     property int statusIconSpacing: iconSize / 4
