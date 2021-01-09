@@ -19,6 +19,13 @@ Emergency stop stops everything -> top level menu
 
 /* handle new "image" message */
 
+/*
+  Maybe we can keep the stop button, bottom right, when running.
+  If it fits and doesn't overlay anything - shouldn't do, since the temperature
+  graph will be climbing to the right.
+  Then we don't need the exit pages
+*/
+
 import QtQuick 2.12
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
@@ -316,12 +323,17 @@ Window {
         height: parent.height * 0.6
         clip: true
 
+        // Keep the selected item in the middle of the list
+        highlightRangeMode: ListView.StrictlyEnforceRange
+        preferredHighlightBegin: height/2 - buttonSize / 4
+        preferredHighlightEnd: height/2 + buttonSize / 4
+
         model: presets
 
         onVisibleChanged: ensureSelectionIsVisible()
 
         function repopulate() {
-            presets.clear()
+            model.clear()
             messages.send("list")
         }
         function down() {
@@ -343,44 +355,41 @@ Window {
         }
 
         delegate: Text {
+            leftPadding: buttonSize / 4
+            rightPadding: buttonSize / 4
             font.bold: ListView.isCurrentItem
             font.pixelSize: buttonSize / 2
             text: name
         }
 
+        // To debug the size, but also gives a bit of contrast and makes it
+        // obvious there's somethine there, even if there are few/no entries.
         Rectangle {
             anchors.fill: parent
             z: -1
-            color: "yellow"
+            color: "lightgrey"
         }
     }
 
     Item {
         id: menu
         state: "top"
+
+        onStateChanged: console.log("menu.state=", state)
+
         states: [
             State {
                 name: "top"
                 PropertyChanges { target: buttons; visible: true }
                 PropertyChanges { target: button1; icon.source: "qrc:/icons/thermometer.svg" }
                 PropertyChanges { target: button2; icon.source: "qrc:/icons/timeline.svg" }
-                PropertyChanges { target: button3; icon.source: "" /* "qrc:/icons/timeline_add.svg" */ }
+                PropertyChanges { target: button3; icon.source: "" } // "qrc:/icons/timeline_add.svg"
                 PropertyChanges { target: button4; icon.source: "qrc:/icons/stop.svg" }
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
 
-                readonly property var actions: [menu.noAction, presetList.repopulate, menu.noAction, function(){ messages.send("allstop")}]
+                readonly property var actions: [menu.noAction, presetList.repopulate, menu.noAction, menu.allStop]
                 readonly property var nextStates: ["set.temperature", "preset.choose", "", ""]
-            },
-            State {
-                name: "running"
-                PropertyChanges { target: buttons; visible: false }
-                PropertyChanges { target: temperatureSetter; visible: false }
-                PropertyChanges { target: presetList; visible: false }
-
-                function nextStateForButtonPress(button) {
-                    return "top"
-                }
             },
             State {
                 name: "set.temperature"
@@ -401,8 +410,20 @@ Window {
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
                 function nextStateForButtonPress(button) {
-                    return "set.temperature"
+                    return "set.exit"
                 }
+            },
+            State {
+                name: "set.exit"
+                PropertyChanges { target: buttons; visible: true }
+                PropertyChanges { target: button1; icon.source: "qrc:/icons/thermometer.svg" }
+                PropertyChanges { target: button2; icon.source: "" }
+                PropertyChanges { target: button3; icon.source: "" }
+                PropertyChanges { target: button4; icon.source: "qrc:/icons/stop.svg" }
+                PropertyChanges { target: temperatureSetter; visible: true }
+                PropertyChanges { target: presetList; visible: false }
+                readonly property var actions: [menu.noAction, menu.noAction, menu.noAction, menu.allStop]
+                readonly property var nextStates: ["set.temperature", "", "", "top"]
             },
             State {
                 name: "preset.choose"
@@ -423,8 +444,20 @@ Window {
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
                 function nextStateForButtonPress(button) {
-                    return "preset.choose"
+                    return "preset.exit"
                 }
+            },
+            State {
+                name: "preset.exit"
+                PropertyChanges { target: buttons; visible: true }
+                PropertyChanges { target: button1; icon.source: "qrc:/icons/timeline.svg" }
+                PropertyChanges { target: button2; icon.source: "" }
+                PropertyChanges { target: button3; icon.source: "" }
+                PropertyChanges { target: button4; icon.source: "qrc:/icons/stop.svg" }
+                PropertyChanges { target: temperatureSetter; visible: false }
+                PropertyChanges { target: presetList; visible: false }
+                readonly property var actions: [menu.noAction, menu.noAction, menu.noAction, menu.allStop]
+                readonly property var nextStates: ["preset.choose", "", "", "top"]
             }
         ]
 
@@ -465,6 +498,10 @@ Window {
         }
 
         function noAction() {}
+
+        function allStop() {
+            messages.send("allstop")
+        }
     }
 
     Timer {
