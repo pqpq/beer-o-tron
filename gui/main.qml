@@ -26,6 +26,9 @@ Emergency stop stops everything -> top level menu
   Then we don't need the exit pages
 */
 
+// Disable up and down buttons when list ends are reached.
+// Disable + and - buttons when temperature limits are reached
+
 import QtQuick 2.12
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
@@ -33,21 +36,18 @@ import QtQuick.Window 2.12
 
 import Beer 1.0     // always a good idea!
 
-// Expected QQmlContext properties:
-// bool runWindowed : whether we're windowed (for testing), or full screen.
-
 
 Window {
     id: window
     visible: true
 
-    visibility: runWindowed ? "Windowed" : "FullScreen"
-    width: 640
-    height: 480
-
+    // The 'runWindowed' QQmlContext property must come from main.cpp
     flags: runWindowed ? Qt.Window : Qt.FramelessWindowHint
+    visibility: runWindowed ? "Windowed" : "FullScreen"
 
     title: qsTr("Mash-o-MatiC")
+    width: 640
+    height: 480
 
     // Scale everything with screen size so it works on large screen during
     // development, and small screen on RPi.
@@ -59,6 +59,7 @@ Window {
     property int buttonSize: window.width / 8
 
     property ListModel presets: ListModel{}
+    property alias backgroundImagePath: background.source
 
     Messages {
         id: messages
@@ -73,7 +74,6 @@ Window {
     Image {
         id: background
         anchors.fill: parent
-        source: pathToGraph
         opacity: buttons.visible ? 0.33 : 1
     }
 
@@ -565,6 +565,12 @@ Window {
         }
         if (message.startsWith("preset")) {
             parsePreset(message)
+        }
+        if (message.startsWith("image")) {
+            const indexOfPayload = message.indexOf(" ")
+            if (indexOfPayload > 0) {
+                backgroundImagePath = "file:" + message.slice(indexOfPayload + 1)
+            }
         }
     }
 

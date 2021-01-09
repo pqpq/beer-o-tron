@@ -27,11 +27,10 @@ ApplicationWindow {
             text:
                 "Send messages:      H - hot       P - pump      Ctrl-P - pump on\n" +
                 "                    C - cold      E - heat      Ctrl-E - heat on\n" +
-                "                    K - ok        - / + - change temperature\n" +
-                "                    S - stop      [ / ] - change time\n" +
-                "                                  < / > - change time by 1 hour\n" +
-                "                    L - hard coded list of presets\n" +
-                "\n" +
+                "                    K - ok        -/+ - change temperature\n" +
+                "                    S - stop      [/] - change time (</> 1 hour steps)\n" +
+                "                    L - hard coded presets      I - hard coded graph\n" +
+                "                                                N - splash screen\n" +
                 "  B   - toggle responding to heartbeats\n" +
                 "space - toggle auto scroll\n"
         }
@@ -125,6 +124,10 @@ ApplicationWindow {
                 messages.send("ok")
                 event.accepted = true
                 break
+            case Qt.Key_I:
+                messages.send("image ../data/graph.png")
+                event.accepted = true
+                break
             case Qt.Key_L:
                 messages.send("preset \"one\" \"blah blah blah\"")
                 messages.send("preset \"two\" \"blah blah blah\"")
@@ -136,6 +139,10 @@ ApplicationWindow {
                 messages.send("preset \"blah\" \"whatever\"")
                 messages.send("preset \"quite a long name\" \"some sort of description\"")
                 messages.send("preset \"mash.txt\" \"0934098092357\"")
+                event.accepted = true
+                break
+            case Qt.Key_N:
+                messages.send("image ../data/splash.png")
                 event.accepted = true
                 break
             case Qt.Key_P:
