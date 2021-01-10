@@ -1,24 +1,16 @@
 ﻿// NEXT:
 //
 // Make stop icon red?
-//
-// Keep stop icon and menu icon on screen when running. Feint?
-
-
-// WHY AREN'T IMAGES SCALING PROPERLY WHEN CONTENT IS SVG? BUTTONS WORK!!!!
+// Make temperature bigger
+// move preset list (and condifm?) up a bit
 
 
 /// @todo:
 
-/*
-  Maybe we can keep the stop button, bottom right, when running.
-  If it fits and doesn't overlay anything - shouldn't do, since the temperature
-  graph will be climbing to the right.
-  Then we don't need the exit pages
-*/
-
 // Disable up and down buttons when list ends are reached.
 // Disable + and - buttons when temperature limits are reached
+// Sort out status bar icons changing the height a bit when pump/heat come & go.
+//   - fixed size PNGs?
 
 import QtQuick 2.12
 import QtQuick.Controls 2.4
@@ -72,7 +64,7 @@ Window {
         id: background
         anchors.fill: parent
         fillMode: Image.PreserveAspectFit
-        opacity: buttons.visible ? 0.33 : 1
+        opacity: menu.state.endsWith("run") ? 1 : 0.33
     }
 
     // Part transparent rectangle overlaying the background image so we can
@@ -214,6 +206,7 @@ Window {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.bottomMargin: buttonBottomMargin
+        opacity: menu.state.endsWith("run") ? 0.5 : 1
 
         RoundButton {
             id: button1
@@ -408,7 +401,6 @@ Window {
         states: [
             State {
                 name: "top"
-                PropertyChanges { target: buttons; visible: true }
                 PropertyChanges { target: button1; icon.source: "qrc:/icons/thermometer.svg" }
                 PropertyChanges { target: button2; icon.source: "qrc:/icons/timeline.svg" }
                 PropertyChanges { target: button3; icon.source: "" } // "qrc:/icons/timeline_add.svg"
@@ -422,7 +414,6 @@ Window {
             },
             State {
                 name: "set.temperature"
-                PropertyChanges { target: buttons; visible: true }
                 PropertyChanges { target: button1; icon.source: "qrc:/icons/close.svg" }
                 PropertyChanges { target: button2; icon.source: "qrc:/icons/remove.svg" }
                 PropertyChanges { target: button3; icon.source: "qrc:/icons/add.svg"}
@@ -436,22 +427,11 @@ Window {
             },
             State {
                 name: "set.run"
-                PropertyChanges { target: buttons; visible: false }
-                PropertyChanges { target: temperatureSetter; visible: false }
-                PropertyChanges { target: presetList; visible: false }
-                PropertyChanges { target: presetDetails; visible: false }
-                function nextStateForButtonPress(button) {
-                    return "set.exit"
-                }
-            },
-            State {
-                name: "set.exit"
-                PropertyChanges { target: buttons; visible: true }
-                PropertyChanges { target: button1; icon.source: "qrc:/icons/back.svg" }
+                PropertyChanges { target: button1; icon.source: "qrc:/icons/menu.svg" }
                 PropertyChanges { target: button2; icon.source: "" }
                 PropertyChanges { target: button3; icon.source: "" }
                 PropertyChanges { target: button4; icon.source: "qrc:/icons/stop.svg" }
-                PropertyChanges { target: temperatureSetter; visible: true }
+                PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
                 readonly property var actions: [menu.noAction, menu.noAction, menu.noAction, menu.allStop]
@@ -459,7 +439,6 @@ Window {
             },
             State {
                 name: "preset.choose"
-                PropertyChanges { target: buttons; visible: true }
                 PropertyChanges { target: button1; icon.source: "qrc:/icons/close.svg" }
                 PropertyChanges { target: button2; icon.source: "qrc:/icons/down.svg" }
                 PropertyChanges { target: button3; icon.source: "qrc:/icons/up.svg"}
@@ -472,7 +451,6 @@ Window {
             },
             State {
                 name: "preset.confirm"
-                PropertyChanges { target: buttons; visible: true }
                 PropertyChanges { target: button1; icon.source: "qrc:/icons/back.svg" }
                 PropertyChanges { target: button2; icon.source: "" }
                 PropertyChanges { target: button3; icon.source: ""}
@@ -484,26 +462,15 @@ Window {
             },
             State {
                 name: "preset.run"
-                PropertyChanges { target: buttons; visible: false }
-                PropertyChanges { target: temperatureSetter; visible: false }
-                PropertyChanges { target: presetList; visible: false }
-                PropertyChanges { target: presetDetails; visible: false }
-                function nextStateForButtonPress(button) {
-                    return "preset.exit"
-                }
-            },
-            State {
-                name: "preset.exit"
-                PropertyChanges { target: buttons; visible: true }
-                PropertyChanges { target: button1; icon.source: "qrc:/icons/back.svg" }
+                PropertyChanges { target: button1; icon.source: "qrc:/icons/menu.svg" }
                 PropertyChanges { target: button2; icon.source: "" }
                 PropertyChanges { target: button3; icon.source: "" }
                 PropertyChanges { target: button4; icon.source: "qrc:/icons/stop.svg" }
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
-                PropertyChanges { target: presetDetails; visible: true }
+                PropertyChanges { target: presetDetails; visible: false }
                 readonly property var actions: [menu.noAction, menu.noAction, menu.noAction, menu.allStop]
-                readonly property var nextStates: ["preset.choose", "", "", "top"]
+                readonly property var nextStates: ["preset.confirm", "", "", "top"]
             }
         ]
 
