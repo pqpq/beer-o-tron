@@ -1,6 +1,5 @@
 ﻿// NEXT:
 //
-// Make stop icon red?
 // Make temperature bigger
 // move preset list (and condifm?) up a bit
 
@@ -404,7 +403,7 @@ Window {
                 PropertyChanges { target: button1; icon.source: "qrc:/icons/thermometer.svg" }
                 PropertyChanges { target: button2; icon.source: "qrc:/icons/timeline.svg" }
                 PropertyChanges { target: button3; icon.source: "" } // "qrc:/icons/timeline_add.svg"
-                PropertyChanges { target: button4; icon.source: "qrc:/icons/stop.svg" }
+                PropertyChanges { target: button4; icon.source: "qrc:/icons/stop.svg"; icon.color: "red" }
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
@@ -417,7 +416,7 @@ Window {
                 PropertyChanges { target: button1; icon.source: "qrc:/icons/close.svg" }
                 PropertyChanges { target: button2; icon.source: "qrc:/icons/remove.svg" }
                 PropertyChanges { target: button3; icon.source: "qrc:/icons/add.svg"}
-                PropertyChanges { target: button4; icon.source: "qrc:/icons/check.svg" }
+                PropertyChanges { target: button4; icon.source: "qrc:/icons/check.svg"; icon.color: "transparent" }
                 PropertyChanges { target: temperatureSetter; visible: true }
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
@@ -430,7 +429,7 @@ Window {
                 PropertyChanges { target: button1; icon.source: "qrc:/icons/menu.svg" }
                 PropertyChanges { target: button2; icon.source: "" }
                 PropertyChanges { target: button3; icon.source: "" }
-                PropertyChanges { target: button4; icon.source: "qrc:/icons/stop.svg" }
+                PropertyChanges { target: button4; icon.source: "qrc:/icons/stop.svg"; icon.color: "red" }
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
@@ -442,7 +441,7 @@ Window {
                 PropertyChanges { target: button1; icon.source: "qrc:/icons/close.svg" }
                 PropertyChanges { target: button2; icon.source: "qrc:/icons/down.svg" }
                 PropertyChanges { target: button3; icon.source: "qrc:/icons/up.svg"}
-                PropertyChanges { target: button4; icon.source: "qrc:/icons/check.svg" }
+                PropertyChanges { target: button4; icon.source: "qrc:/icons/check.svg"; icon.color: "transparent" }
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: true }
                 PropertyChanges { target: presetDetails; visible: false }
@@ -454,7 +453,7 @@ Window {
                 PropertyChanges { target: button1; icon.source: "qrc:/icons/back.svg" }
                 PropertyChanges { target: button2; icon.source: "" }
                 PropertyChanges { target: button3; icon.source: ""}
-                PropertyChanges { target: button4; icon.source: "qrc:/icons/check.svg" }
+                PropertyChanges { target: button4; icon.source: "qrc:/icons/check.svg"; icon.color: "transparent" }
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: true }
@@ -465,7 +464,7 @@ Window {
                 PropertyChanges { target: button1; icon.source: "qrc:/icons/menu.svg" }
                 PropertyChanges { target: button2; icon.source: "" }
                 PropertyChanges { target: button3; icon.source: "" }
-                PropertyChanges { target: button4; icon.source: "qrc:/icons/stop.svg" }
+                PropertyChanges { target: button4; icon.source: "qrc:/icons/stop.svg"; icon.color: "red" }
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
