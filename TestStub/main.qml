@@ -129,7 +129,7 @@ ApplicationWindow {
                 event.accepted = true
                 break
             case Qt.Key_L:
-                messages.send("preset \"one\" \"blah blah blah\"")
+                messages.send("preset \"one\" \"blah blah <br>blah. This is really long. Will it automatically split over many lines? I wonder, yes I wonder. Oooh I wonder?\"")
                 messages.send("preset \"two\" \"blah blah blah\"")
                 messages.send("preset \"three 3\"")
                 messages.send("preset \"no closing quote")
@@ -137,7 +137,7 @@ ApplicationWindow {
                 messages.send("preset noquotes")
                 messages.send("preset \"my mash\" \"55' rest\"")
                 messages.send("preset \"blah\" \"whatever\"")
-                messages.send("preset \"quite a long name\" \"some sort of description\"")
+                messages.send("preset \"quite a long name that should elide\" \"some sort of description\"")
                 messages.send("preset \"mash.txt\" \"0934098092357\"")
                 event.accepted = true
                 break

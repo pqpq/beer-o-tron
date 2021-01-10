@@ -1,23 +1,11 @@
-﻿// Where are we going to show the name of the pre-set we're running?
-// When you press a button, when its idle (but running).
-// This should also bring up the option to do an emergency stop, as well as whatever else.
+﻿// NEXT:
+//
+// Make stop icon red?
+//
+// Keep stop icon and menu icon on screen when running. Feint?
+
 
 /// @todo:
-
-/*
-When returning from a running page, should go to intermediate page which just
-has menu and emergency stop buttons.
-This should show the preset temp, or name of the preset.
-Menu button goes back to settings for that mode.
-Emergency stop stops everything -> top level menu
-*/
-
-/*
-  When you select a preset, next page shows name and details, with confirm
-  or back buttons
-  */
-
-/* handle new "image" message */
 
 /*
   Maybe we can keep the stop button, bottom right, when running.
@@ -57,6 +45,10 @@ Window {
     property int statusFontWeight: Font.Bold
 
     property int buttonSize: window.width / 8
+    property int listWidth: window.width / 2
+    property int listHeight: window.height / 2
+    property int textSize: iconSize
+    property int descriptionTextSize: textSize * 2/3
 
     property ListModel presets: ListModel{}
     property alias backgroundImagePath: background.source
@@ -221,7 +213,7 @@ Window {
         id: buttons
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
-        anchors.margins: buttonSize / 4
+        anchors.bottomMargin: buttonSize / 8
         spacing: buttonSize
 
         RoundButton {
@@ -308,7 +300,7 @@ Window {
 
         Text {
             anchors.centerIn: parent
-            font.pixelSize: buttonSize
+            font.pixelSize: textSize
             font.bold: true
             text: parent.valueString + "°C"
         }
@@ -317,16 +309,15 @@ Window {
     ListView {
         id: presetList
 
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: rightStatus.bottom
-        width: parent.width / 2
-        height: parent.height * 0.6
+        anchors.centerIn: parent
+        width: listWidth
+        height: listHeight
         clip: true
 
         // Keep the selected item in the middle of the list
         highlightRangeMode: ListView.StrictlyEnforceRange
-        preferredHighlightBegin: height/2 - buttonSize / 4
-        preferredHighlightEnd: height/2 + buttonSize / 4
+        preferredHighlightBegin: height/2 - textSize / 2
+        preferredHighlightEnd: height/2 + textSize / 2
 
         model: presets
 
@@ -349,16 +340,19 @@ Window {
         function select() {
             let obj = model.get(currentIndex)
             messages.send("run \"" + obj.name + '"')
+            presetDetails.name = obj.name
+            presetDetails.description = obj.description
         }
         function ensureSelectionIsVisible() {
             positionViewAtIndex(currentIndex, ListView.Contain)
         }
 
         delegate: Text {
-            leftPadding: buttonSize / 4
-            rightPadding: buttonSize / 4
+            leftPadding: textSize / 2
+            rightPadding: textSize / 2
             font.bold: ListView.isCurrentItem
-            font.pixelSize: buttonSize / 2
+            font.pixelSize: textSize
+            elide: Text.ElideRight
             text: name
         }
 
@@ -368,7 +362,54 @@ Window {
             anchors.fill: parent
             z: -1
             color: "lightgrey"
+            opacity: 0.5
         }
+    }
+
+    ColumnLayout {
+        id: presetDetails
+        anchors.centerIn: parent
+        property int textMargins: textSize / 4
+
+        property alias name: name.text
+        property alias description: description.text
+
+        Text {
+            id: name
+            font.bold: true
+            font.pixelSize: textSize
+            elide: Text.ElideRight
+            Layout.margins: parent.textMargins
+            Layout.bottomMargin: 0
+            Layout.maximumWidth: window.width * 0.75
+            //Rectangle {
+            //    anchors.fill: parent
+            //    color: "red"
+            //    z: -0.5
+            //}
+        }
+        Text {
+            id: description
+            font.pixelSize: descriptionTextSize
+            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+            elide: Text.ElideRight
+            Layout.margins: parent.textMargins
+            Layout.maximumWidth: window.width * 0.75
+            Layout.maximumHeight: descriptionTextSize * 5
+            //Rectangle {
+            //    anchors.fill: parent
+            //    color: "blue"
+            //    z: -0.5
+            //}
+        }
+    }
+    Rectangle {
+        id: presetDetailsBackground
+        anchors.fill: presetDetails
+        visible: presetDetails.visible
+        z: -1
+        color: "lightgrey"
+        opacity: 0.5
     }
 
     Item {
@@ -387,6 +428,7 @@ Window {
                 PropertyChanges { target: button4; icon.source: "qrc:/icons/stop.svg" }
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
+                PropertyChanges { target: presetDetails; visible: false }
 
                 readonly property var actions: [menu.noAction, presetList.repopulate, menu.noAction, menu.allStop]
                 readonly property var nextStates: ["set.temperature", "preset.choose", "", ""]
@@ -400,6 +442,7 @@ Window {
                 PropertyChanges { target: button4; icon.source: "qrc:/icons/check.svg" }
                 PropertyChanges { target: temperatureSetter; visible: true }
                 PropertyChanges { target: presetList; visible: false }
+                PropertyChanges { target: presetDetails; visible: false }
 
                 readonly property var actions: [menu.noAction, temperatureSetter.decrease, temperatureSetter.increase, temperatureSetter.set]
                 readonly property var nextStates: ["top", "", "", "set.run"]
@@ -409,6 +452,7 @@ Window {
                 PropertyChanges { target: buttons; visible: false }
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
+                PropertyChanges { target: presetDetails; visible: false }
                 function nextStateForButtonPress(button) {
                     return "set.exit"
                 }
@@ -416,12 +460,13 @@ Window {
             State {
                 name: "set.exit"
                 PropertyChanges { target: buttons; visible: true }
-                PropertyChanges { target: button1; icon.source: "qrc:/icons/thermometer.svg" }
+                PropertyChanges { target: button1; icon.source: "qrc:/icons/back.svg" }
                 PropertyChanges { target: button2; icon.source: "" }
                 PropertyChanges { target: button3; icon.source: "" }
                 PropertyChanges { target: button4; icon.source: "qrc:/icons/stop.svg" }
                 PropertyChanges { target: temperatureSetter; visible: true }
                 PropertyChanges { target: presetList; visible: false }
+                PropertyChanges { target: presetDetails; visible: false }
                 readonly property var actions: [menu.noAction, menu.noAction, menu.noAction, menu.allStop]
                 readonly property var nextStates: ["set.temperature", "", "", "top"]
             },
@@ -434,15 +479,28 @@ Window {
                 PropertyChanges { target: button4; icon.source: "qrc:/icons/check.svg" }
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: true }
-
+                PropertyChanges { target: presetDetails; visible: false }
                 readonly property var actions: [menu.noAction, presetList.down, presetList.up, presetList.select]
-                readonly property var nextStates: ["top", "", "", "preset.run"]
+                readonly property var nextStates: ["top", "", "", "preset.confirm"]
+            },
+            State {
+                name: "preset.confirm"
+                PropertyChanges { target: buttons; visible: true }
+                PropertyChanges { target: button1; icon.source: "qrc:/icons/back.svg" }
+                PropertyChanges { target: button2; icon.source: "" }
+                PropertyChanges { target: button3; icon.source: ""}
+                PropertyChanges { target: button4; icon.source: "qrc:/icons/check.svg" }
+                PropertyChanges { target: temperatureSetter; visible: false }
+                PropertyChanges { target: presetList; visible: false }
+                PropertyChanges { target: presetDetails; visible: true }
+                readonly property var nextStates: ["preset.choose", "", "", "preset.run"]
             },
             State {
                 name: "preset.run"
                 PropertyChanges { target: buttons; visible: false }
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
+                PropertyChanges { target: presetDetails; visible: false }
                 function nextStateForButtonPress(button) {
                     return "preset.exit"
                 }
@@ -450,12 +508,13 @@ Window {
             State {
                 name: "preset.exit"
                 PropertyChanges { target: buttons; visible: true }
-                PropertyChanges { target: button1; icon.source: "qrc:/icons/timeline.svg" }
+                PropertyChanges { target: button1; icon.source: "qrc:/icons/back.svg" }
                 PropertyChanges { target: button2; icon.source: "" }
                 PropertyChanges { target: button3; icon.source: "" }
                 PropertyChanges { target: button4; icon.source: "qrc:/icons/stop.svg" }
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
+                PropertyChanges { target: presetDetails; visible: true }
                 readonly property var actions: [menu.noAction, menu.noAction, menu.noAction, menu.allStop]
                 readonly property var nextStates: ["preset.choose", "", "", "top"]
             }
