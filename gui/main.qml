@@ -1,7 +1,5 @@
 ﻿// NEXT:
 
-// Put icons in right corner, maybe change opacity rather than visibility?
-// Put time central in status bar. Or time on L, temperature in middle?
 // Disable up and down buttons when list ends are reached.
 // Disable + and - buttons when temperature limits are reached
 
@@ -78,27 +76,33 @@ Window {
         }
     }
 
-    RowLayout {
+    // We don't need a Row or RowLayout, because we want to position things
+    // precisely, and don't want them to move when other item's visibility changes.
+    Item {
         id: statusRow
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        spacing: statusIconSpacing
+        height: iconSize
 
         Text {
-            id: temperature
-            Layout.leftMargin: statusIconSpacing
+            id: time
             font.pixelSize: statusFontSize
             font.weight: statusFontWeight
             horizontalAlignment: Text.AlignLeft
             verticalAlignment: Text.AlignVCenter
-            text: "---"
+            anchors.left: parent.left
+            visible: text
         }
 
-        Item {
-            id: spacer
-            Layout.fillWidth: true
-            height: 1
+        Text {
+            id: temperature
+            font.pixelSize: statusFontSize
+            font.weight: statusFontWeight
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            anchors.centerIn: parent
+            text: "---"
         }
 
         Image {
@@ -107,13 +111,8 @@ Window {
             width: iconSize
             sourceSize.width: iconSize
             source: "qrc:/icons/flame.svg"
+            anchors.right: pump.left
             visible: false
-        }
-        Item {
-            id: heaterSpacer
-            height: iconSize
-            width: iconSize
-            visible: !heater.visible
         }
 
         Image {
@@ -122,6 +121,7 @@ Window {
             width: iconSize
             sourceSize.width: iconSize
             source: "qrc:/icons/pump.svg"
+            anchors.right: status.left
             visible: false
 
             RotationAnimator on rotation {
@@ -132,25 +132,10 @@ Window {
                 running: pump.visible
             }
         }
-        Item {
-            id: pumpSpacer
-            height: iconSize
-            width: iconSize
-            visible: !pump.visible
-        }
-
-        Text {
-            id: time
-            font.pixelSize: statusFontSize
-            font.weight: statusFontWeight
-            horizontalAlignment: Text.AlignRight
-            verticalAlignment: Text.AlignVCenter
-            visible: text
-        }
 
         Image {
             id: status
-            Layout.rightMargin: statusIconSpacing
+            anchors.right: parent.right
             height: iconSize
             width: iconSize
             sourceSize.width: iconSize
