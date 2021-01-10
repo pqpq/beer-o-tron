@@ -1,7 +1,7 @@
 ﻿// NEXT:
 //
-// Make temperature bigger
-// move preset list (and condifm?) up a bit
+// Make status bar spacers height 1 so they don't mess things up?
+// Then text height should dominate, and things won't resize?
 
 
 /// @todo:
@@ -205,6 +205,7 @@ Window {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.bottomMargin: buttonBottomMargin
+        height: button1.height
         opacity: menu.state.endsWith("run") ? 0.5 : 1
 
         RoundButton {
@@ -252,143 +253,153 @@ Window {
         }
     }
 
-    Rectangle {
-        id: temperatureSetter
-        anchors.centerIn: parent
+    Item {
+        // Get the posisitioning right once, for this outer Item, then everything
+        // else can simply center in it.
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: statusRow.bottom
+        anchors.bottom: buttons.top
 
-        property int decimals: 1
-        property real value: 66.6
-        readonly property real step: 0.1
-        property string valueString: Number(value).toLocaleString(Qt.locale(), 'f', decimals)
-
-        function decrease() {
-            if (value > 20.0) {
-                value -= step
-            }
-        }
-
-        function increase() {
-            if (value < (80.0 - step)) {
-                value += step
-            }
-        }
-
-        function set() {
-            messages.send("set " + valueString)
-        }
-
-        Text {
-            anchors.centerIn: parent
-            font.pixelSize: textSize
-            font.bold: true
-            text: parent.valueString + "°C"
-        }
-    }
-
-    ListView {
-        id: presetList
-
-        anchors.centerIn: parent
-        width: listWidth
-        height: listHeight
-        clip: true
-
-        // Keep the selected item in the middle of the list
-        highlightRangeMode: ListView.StrictlyEnforceRange
-        preferredHighlightBegin: height/2 - textSize / 2
-        preferredHighlightEnd: height/2 + textSize / 2
-
-        model: presets
-
-        onVisibleChanged: ensureSelectionIsVisible()
-
-        function repopulate() {
-            model.clear()
-            messages.send("list")
-        }
-        function down() {
-            if (currentIndex < model.count-1)
-                currentIndex++
-            ensureSelectionIsVisible()
-        }
-        function up() {
-            if (currentIndex > 0)
-                currentIndex--
-            ensureSelectionIsVisible()
-        }
-        function select() {
-            let obj = model.get(currentIndex)
-            messages.send("run \"" + obj.name + '"')
-            presetDetails.name = obj.name
-            presetDetails.description = obj.description
-        }
-        function ensureSelectionIsVisible() {
-            positionViewAtIndex(currentIndex, ListView.Contain)
-        }
-
-        delegate: Text {
-            leftPadding: textSize / 2
-            rightPadding: textSize / 2
-            font.bold: ListView.isCurrentItem
-            font.pixelSize: textSize
-            elide: Text.ElideRight
-            text: name
-        }
-
-        // To debug the size, but also gives a bit of contrast and makes it
-        // obvious there's somethine there, even if there are few/no entries.
         Rectangle {
-            anchors.fill: parent
+            id: temperatureSetter
+
+            anchors.centerIn: parent
+
+            property int decimals: 1
+            property real value: 66.6
+            readonly property real step: 0.1
+            property string valueString: Number(value).toLocaleString(Qt.locale(), 'f', decimals)
+
+            function decrease() {
+                if (value > 20.0) {
+                    value -= step
+                }
+            }
+
+            function increase() {
+                if (value < (80.0 - step)) {
+                    value += step
+                }
+            }
+
+            function set() {
+                messages.send("set " + valueString)
+            }
+
+            Text {
+                anchors.centerIn: parent
+                font.pixelSize: textSize * 1.5
+                font.bold: true
+                text: parent.valueString + "°C"
+            }
+        }
+
+        ListView {
+            id: presetList
+
+            anchors.centerIn: parent
+            width: listWidth
+            height: listHeight
+            clip: true
+
+            // Keep the selected item in the middle of the list
+            highlightRangeMode: ListView.StrictlyEnforceRange
+            preferredHighlightBegin: height/2 - textSize / 2
+            preferredHighlightEnd: height/2 + textSize / 2
+
+            model: presets
+
+            onVisibleChanged: ensureSelectionIsVisible()
+
+            function repopulate() {
+                model.clear()
+                messages.send("list")
+            }
+            function down() {
+                if (currentIndex < model.count-1)
+                    currentIndex++
+                ensureSelectionIsVisible()
+            }
+            function up() {
+                if (currentIndex > 0)
+                    currentIndex--
+                ensureSelectionIsVisible()
+            }
+            function select() {
+                let obj = model.get(currentIndex)
+                messages.send("run \"" + obj.name + '"')
+                presetDetails.name = obj.name
+                presetDetails.description = obj.description
+            }
+            function ensureSelectionIsVisible() {
+                positionViewAtIndex(currentIndex, ListView.Contain)
+            }
+
+            delegate: Text {
+                leftPadding: textSize / 2
+                rightPadding: textSize / 2
+                font.bold: ListView.isCurrentItem
+                font.pixelSize: textSize
+                elide: Text.ElideRight
+                text: name
+            }
+
+            // To debug the size, but also gives a bit of contrast and makes it
+            // obvious there's somethine there, even if there are few/no entries.
+            Rectangle {
+                anchors.fill: parent
+                z: -1
+                color: "lightgrey"
+                opacity: 0.5
+            }
+        }
+
+        ColumnLayout {
+            id: presetDetails
+            anchors.centerIn: parent
+
+            property int textMargins: textSize / 4
+
+            property alias name: name.text
+            property alias description: description.text
+
+            Text {
+                id: name
+                font.bold: true
+                font.pixelSize: textSize
+                elide: Text.ElideRight
+                Layout.margins: parent.textMargins
+                Layout.bottomMargin: 0
+                Layout.maximumWidth: window.width * 0.75
+                //Rectangle {
+                //    anchors.fill: parent
+                //    color: "red"
+                //    z: -0.5
+                //}
+            }
+            Text {
+                id: description
+                font.pixelSize: descriptionTextSize
+                wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                elide: Text.ElideRight
+                Layout.margins: parent.textMargins
+                Layout.maximumWidth: window.width * 0.75
+                Layout.maximumHeight: descriptionTextSize * 5
+                //Rectangle {
+                //    anchors.fill: parent
+                //    color: "blue"
+                //    z: -0.5
+                //}
+            }
+        }
+        Rectangle {
+            id: presetDetailsBackground
+            anchors.fill: presetDetails
+            visible: presetDetails.visible
             z: -1
             color: "lightgrey"
             opacity: 0.5
         }
-    }
-
-    ColumnLayout {
-        id: presetDetails
-        anchors.centerIn: parent
-        property int textMargins: textSize / 4
-
-        property alias name: name.text
-        property alias description: description.text
-
-        Text {
-            id: name
-            font.bold: true
-            font.pixelSize: textSize
-            elide: Text.ElideRight
-            Layout.margins: parent.textMargins
-            Layout.bottomMargin: 0
-            Layout.maximumWidth: window.width * 0.75
-            //Rectangle {
-            //    anchors.fill: parent
-            //    color: "red"
-            //    z: -0.5
-            //}
-        }
-        Text {
-            id: description
-            font.pixelSize: descriptionTextSize
-            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-            elide: Text.ElideRight
-            Layout.margins: parent.textMargins
-            Layout.maximumWidth: window.width * 0.75
-            Layout.maximumHeight: descriptionTextSize * 5
-            //Rectangle {
-            //    anchors.fill: parent
-            //    color: "blue"
-            //    z: -0.5
-            //}
-        }
-    }
-    Rectangle {
-        id: presetDetailsBackground
-        anchors.fill: presetDetails
-        visible: presetDetails.visible
-        z: -1
-        color: "lightgrey"
-        opacity: 0.5
     }
 
     Item {
