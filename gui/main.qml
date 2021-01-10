@@ -1,15 +1,10 @@
 ﻿// NEXT:
-//
-// Make status bar spacers height 1 so they don't mess things up?
-// Then text height should dominate, and things won't resize?
 
-
-/// @todo:
-
+// Put icons in right corner, maybe change opacity rather than visibility?
+// Put time central in status bar. Or time on L, temperature in middle?
 // Disable up and down buttons when list ends are reached.
 // Disable + and - buttons when temperature limits are reached
-// Sort out status bar icons changing the height a bit when pump/heat come & go.
-//   - fixed size PNGs?
+
 
 import QtQuick 2.12
 import QtQuick.Controls 2.4
@@ -28,8 +23,8 @@ Window {
     visibility: runWindowed ? "Windowed" : "FullScreen"
 
     title: qsTr("Mash-o-MatiC")
-    width: 640
-    height: 480
+    width: 320//640
+    height: 240//480
 
     // Scale everything with screen size so it works on large screen during
     // development, and small screen on RPi.
@@ -110,6 +105,7 @@ Window {
             id: heater
             height: iconSize
             width: iconSize
+            sourceSize.width: iconSize
             source: "qrc:/icons/flame.svg"
             visible: false
         }
@@ -124,6 +120,7 @@ Window {
             id: pump
             height: iconSize
             width: iconSize
+            sourceSize.width: iconSize
             source: "qrc:/icons/pump.svg"
             visible: false
 
@@ -156,6 +153,7 @@ Window {
             Layout.rightMargin: statusIconSpacing
             height: iconSize
             width: iconSize
+            sourceSize.width: iconSize
 
             // Normally we toggle between 0 and 1, so the user sees a constantly
             // changing heart, which is a good sign.
