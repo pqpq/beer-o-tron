@@ -45,13 +45,14 @@ Window {
     property int statusFontWeight: Font.Bold
 
     property int buttonSize: window.width / 8
+    property int buttonBottomMargin: buttonSize / 8
+
     property int listWidth: window.width / 2
     property int listHeight: window.height / 2
     property int textSize: iconSize
     property int descriptionTextSize: textSize * 2/3
 
     property ListModel presets: ListModel{}
-    property alias backgroundImagePath: background.source
 
     Messages {
         id: messages
@@ -209,67 +210,55 @@ Window {
     // to press them without a touch screen. Presses are simulated by linking
     // to incoming messages. We emit signals in onClicked() so we can test
     // with a mouse.
-    RowLayout {
+    Item {
         id: buttons
-        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.left: parent.left
+        anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: buttonSize / 8
-        spacing: buttonSize
+        anchors.bottomMargin: buttonBottomMargin
 
         RoundButton {
             id: button1
+            x: parent.width * (1/8) - width / 2
+            anchors.bottom: parent.bottom
+
             visible: icon.source != ""
             icon.width: buttonSize
             icon.height: buttonSize
             onClicked: menu.buttonPressed(1)
         }
-        Item {
-            id: button1NotVisibleSpacer
-            width: buttonSize
-            height: buttonSize
-            visible:!button1.visible
-        }
 
         RoundButton {
             id: button2
+            x: parent.width * (3/8) - width / 2
+            anchors.bottom: parent.bottom
+
             visible: icon.source != ""
             icon.width: buttonSize
             icon.height: buttonSize
             onClicked: menu.buttonPressed(2)
         }
-        Item {
-            id: button2NotVisibleSpacer
-            width: buttonSize
-            height: buttonSize
-            visible:!button2.visible
-        }
 
         RoundButton {
             id: button3
+            x: parent.width * (5/8) - width / 2
+            anchors.bottom: parent.bottom
+
             visible: icon.source != ""
             icon.width: buttonSize
             icon.height: buttonSize
             onClicked: menu.buttonPressed(3)
         }
-        Item {
-            id: button3NotVisibleSpacer
-            width: buttonSize
-            height: buttonSize
-            visible:!button3.visible
-        }
 
         RoundButton {
             id: button4
+            x: parent.width * (7/8) - width / 2
+            anchors.bottom: parent.bottom
+
             visible: icon.source != ""
             icon.width: buttonSize
             icon.height: buttonSize
             onClicked: menu.buttonPressed(4)
-        }
-        Item {
-            id: button4NotVisibleSpacer
-            width: buttonSize
-            height: buttonSize
-            visible:!button4.visible
         }
     }
 
@@ -628,7 +617,7 @@ Window {
         if (message.startsWith("image")) {
             const indexOfPayload = message.indexOf(" ")
             if (indexOfPayload > 0) {
-                backgroundImagePath = "file:" + message.slice(indexOfPayload + 1)
+                background.source = "file:" + message.slice(indexOfPayload + 1)
             }
         }
     }
