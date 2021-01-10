@@ -5,6 +5,9 @@
 // Keep stop icon and menu icon on screen when running. Feint?
 
 
+// WHY AREN'T IMAGES SCALING PROPERLY WHEN CONTENT IS SVG? BUTTONS WORK!!!!
+
+
 /// @todo:
 
 /*
@@ -39,9 +42,10 @@ Window {
 
     // Scale everything with screen size so it works on large screen during
     // development, and small screen on RPi.
-    property int iconSize: height / 10
+    property int unitOfSize: height / 10
+    property int iconSize: unitOfSize
     property int statusIconSpacing: iconSize / 4
-    property int statusFontSize: iconSize * 2/3
+    property int statusFontSize: unitOfSize * 3/4
     property int statusFontWeight: Font.Bold
 
     property int buttonSize: window.width / 8
@@ -49,7 +53,7 @@ Window {
 
     property int listWidth: window.width / 2
     property int listHeight: window.height / 2
-    property int textSize: iconSize
+    property int textSize: unitOfSize
     property int descriptionTextSize: textSize * 2/3
 
     property ListModel presets: ListModel{}
@@ -67,6 +71,7 @@ Window {
     Image {
         id: background
         anchors.fill: parent
+        fillMode: Image.PreserveAspectFit
         opacity: buttons.visible ? 0.33 : 1
     }
 
@@ -87,13 +92,28 @@ Window {
         }
     }
 
-    Row {
-        id: rightStatus
-        anchors.right: parent.right
-        anchors.rightMargin: statusIconSpacing
+    RowLayout {
+        id: statusRow
         anchors.top: parent.top
-        anchors.topMargin: statusIconSpacing
+        anchors.left: parent.left
+        anchors.right: parent.right
         spacing: statusIconSpacing
+
+        Text {
+            id: temperature
+            Layout.leftMargin: statusIconSpacing
+            font.pixelSize: statusFontSize
+            font.weight: statusFontWeight
+            horizontalAlignment: Text.AlignLeft
+            verticalAlignment: Text.AlignVCenter
+            text: "---"
+        }
+
+        Item {
+            id: spacer
+            Layout.fillWidth: true
+            height: 1
+        }
 
         Image {
             id: heater
@@ -115,6 +135,7 @@ Window {
             width: iconSize
             source: "qrc:/icons/pump.svg"
             visible: false
+
             RotationAnimator on rotation {
                 from: 0
                 to: 360
@@ -141,6 +162,7 @@ Window {
 
         Image {
             id: status
+            Layout.rightMargin: statusIconSpacing
             height: iconSize
             width: iconSize
 
@@ -159,15 +181,9 @@ Window {
             }
             function setSource() {
                 opacity = 1
-                if (state === 0) {
-                    source = "qrc:/icons/heart_solid.svg"
-                }
-                else if (state === 1) {
-                    source = "qrc:/icons/heart_border.svg"
-                }
-                else {
-                    source = "qrc:/icons/problem.svg"
-                }
+                state = Math.max(state, 0)
+                state = Math.min(state, 2)
+                source = ["qrc:/icons/heart_solid.svg", "qrc:/icons/heart_border.svg", "qrc:/icons/problem.svg"][state]
             }
             function problem() {
                 if (state !== 2) {
@@ -182,24 +198,6 @@ Window {
                 onTriggered: status.opacity = status.opacity ? 0 : 1
             }
             //onStateChanged: console.log("state=", state)
-        }
-    }
-
-    Row {
-        id: leftStatus
-        anchors.left: parent.left
-        anchors.leftMargin: statusIconSpacing
-        anchors.top: parent.top
-        anchors.topMargin: statusIconSpacing
-        spacing: statusIconSpacing
-
-        Text {
-            id: temperature
-            font.pixelSize: statusFontSize
-            font.weight: statusFontWeight
-            horizontalAlignment: Text.AlignLeft
-            verticalAlignment: Text.AlignVCenter
-            text: "---"
         }
     }
 
