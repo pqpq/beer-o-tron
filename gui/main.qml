@@ -1,10 +1,4 @@
-﻿// NEXT:
-
-// Disable up and down buttons when list ends are reached.
-// Disable + and - buttons when temperature limits are reached
-
-
-import QtQuick 2.12
+﻿import QtQuick 2.12
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 import QtQuick.Window 2.12
@@ -47,11 +41,9 @@ Window {
         onReceived: handle(message)
     }
 
-    /// @todo need a mechanism to update this.
-    /// Timer? Message? QFileSystemWatcher ?
-
     // Background image. Normally the live temperature graph.
     // Can be a splash screen at startup, etc. etc.
+    // Set or refreshed by the "image" message.
     Image {
         id: background
         anchors.fill: parent
@@ -234,11 +226,28 @@ Window {
             icon.height: buttonSize
             onClicked: menu.buttonPressed(4)
         }
+
+        // A fixed "stop" button which is made visible when needed.
+        // This is simpler than changing the colour of button4 depending on state:
+        // that caused problems with button appearance not matching the other
+        // buttons who had not had their colour changed, when it was disabled.
+        RoundButton {
+            id: stopButton
+            x: parent.width * (7/8) - width / 2
+            anchors.bottom: parent.bottom
+
+            visible: false
+            icon.source: "qrc:/icons/stop.svg"
+            icon.color: "red"
+            icon.width: buttonSize
+            icon.height: buttonSize
+            onClicked: menu.buttonPressed(4)
+        }
     }
 
     Item {
-        // Get the posisitioning right once, for this outer Item, then everything
-        // else can simply center in it.
+        // Get the posisitioning right once, for this outer Item,
+        // then everything else can simply center in it.
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: statusRow.bottom
         anchors.bottom: buttons.top
@@ -248,19 +257,25 @@ Window {
 
             anchors.centerIn: parent
 
-            property int decimals: 1
-            property real value: 66.6
+            readonly property int decimals: 1
             readonly property real step: 0.1
+            property real value: 66.6
             property string valueString: Number(value).toLocaleString(Qt.locale(), 'f', decimals)
 
+            function canDecrease() {
+                return value > 20.0
+            }
             function decrease() {
-                if (value > 20.0) {
+                if (canDecrease()) {
                     value -= step
                 }
             }
 
+            function canIncrease() {
+                return value < (80.0 - step)
+            }
             function increase() {
-                if (value < (80.0 - step)) {
+                if (canIncrease()) {
                     value += step
                 }
             }
@@ -298,16 +313,28 @@ Window {
                 model.clear()
                 messages.send("list")
             }
+
+            function canGoDown() {
+                return currentIndex < model.count-1
+            }
             function down() {
-                if (currentIndex < model.count-1)
+                if (canGoDown())
                     currentIndex++
                 ensureSelectionIsVisible()
             }
+
+            function canGoUp() {
+                return currentIndex > 0
+            }
             function up() {
-                if (currentIndex > 0)
+                if (canGoUp())
                     currentIndex--
                 ensureSelectionIsVisible()
             }
+            function canSelect() {
+                return model.count > 0
+            }
+
             function select() {
                 let obj = model.get(currentIndex)
                 messages.send("run \"" + obj.name + '"')
@@ -323,17 +350,18 @@ Window {
                 rightPadding: textSize / 2
                 font.bold: ListView.isCurrentItem
                 font.pixelSize: textSize
+                width: presetList.width
                 elide: Text.ElideRight
                 text: name
             }
 
-            // To debug the size, but also gives a bit of contrast and makes it
-            // obvious there's somethine there, even if there are few/no entries.
+            // A background to give a bit of contrast and makes it obvious
+            // there's something there, even if there are few/no list entries.
             Rectangle {
-                anchors.fill: parent
-                z: -1
                 color: "lightgrey"
                 opacity: 0.5
+                anchors.fill: parent
+                z: -1
             }
         }
 
@@ -354,11 +382,6 @@ Window {
                 Layout.margins: parent.textMargins
                 Layout.bottomMargin: 0
                 Layout.maximumWidth: window.width * 0.75
-                //Rectangle {
-                //    anchors.fill: parent
-                //    color: "red"
-                //    z: -0.5
-                //}
             }
             Text {
                 id: description
@@ -368,11 +391,6 @@ Window {
                 Layout.margins: parent.textMargins
                 Layout.maximumWidth: window.width * 0.75
                 Layout.maximumHeight: descriptionTextSize * 5
-                //Rectangle {
-                //    anchors.fill: parent
-                //    color: "blue"
-                //    z: -0.5
-                //}
             }
         }
         Rectangle {
@@ -389,15 +407,14 @@ Window {
         id: menu
         state: "top"
 
-        onStateChanged: console.log("menu.state=", state)
-
         states: [
             State {
                 name: "top"
                 PropertyChanges { target: button1; icon.source: "qrc:/icons/thermometer.svg" }
-                PropertyChanges { target: button2; icon.source: "qrc:/icons/timeline.svg" }
-                PropertyChanges { target: button3; icon.source: "" } // "qrc:/icons/timeline_add.svg"
-                PropertyChanges { target: button4; icon.source: "qrc:/icons/stop.svg"; icon.color: "red" }
+                PropertyChanges { target: button2; icon.source: "qrc:/icons/timeline.svg"; enabled: true }
+                PropertyChanges { target: button3; icon.source: ""; enabled: true } // "qrc:/icons/timeline_add.svg"
+                PropertyChanges { target: button4; visible: false }
+                PropertyChanges { target: stopButton; visible: true }
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
@@ -408,9 +425,10 @@ Window {
             State {
                 name: "set.temperature"
                 PropertyChanges { target: button1; icon.source: "qrc:/icons/close.svg" }
-                PropertyChanges { target: button2; icon.source: "qrc:/icons/remove.svg" }
-                PropertyChanges { target: button3; icon.source: "qrc:/icons/add.svg"}
-                PropertyChanges { target: button4; icon.source: "qrc:/icons/check.svg"; icon.color: "transparent" }
+                PropertyChanges { target: button2; icon.source: "qrc:/icons/remove.svg"; enabled: temperatureSetter.canDecrease() }
+                PropertyChanges { target: button3; icon.source: "qrc:/icons/add.svg"; enabled: temperatureSetter.canIncrease()}
+                PropertyChanges { target: button4; icon.source: "qrc:/icons/check.svg"; visible: true; enabled: true }
+                PropertyChanges { target: stopButton; visible: false }
                 PropertyChanges { target: temperatureSetter; visible: true }
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
@@ -421,9 +439,10 @@ Window {
             State {
                 name: "set.run"
                 PropertyChanges { target: button1; icon.source: "qrc:/icons/menu.svg" }
-                PropertyChanges { target: button2; icon.source: "" }
-                PropertyChanges { target: button3; icon.source: "" }
-                PropertyChanges { target: button4; icon.source: "qrc:/icons/stop.svg"; icon.color: "red" }
+                PropertyChanges { target: button2; icon.source: ""; enabled: true }
+                PropertyChanges { target: button3; icon.source: ""; enabled: true }
+                PropertyChanges { target: button4; visible: false }
+                PropertyChanges { target: stopButton; visible: true }
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
@@ -433,9 +452,10 @@ Window {
             State {
                 name: "preset.choose"
                 PropertyChanges { target: button1; icon.source: "qrc:/icons/close.svg" }
-                PropertyChanges { target: button2; icon.source: "qrc:/icons/down.svg" }
-                PropertyChanges { target: button3; icon.source: "qrc:/icons/up.svg"}
-                PropertyChanges { target: button4; icon.source: "qrc:/icons/check.svg"; icon.color: "transparent" }
+                PropertyChanges { target: button2; icon.source: "qrc:/icons/down.svg"; enabled: presetList.canGoDown() }
+                PropertyChanges { target: button3; icon.source: "qrc:/icons/up.svg"; enabled: presetList.canGoUp() }
+                PropertyChanges { target: button4; icon.source: "qrc:/icons/check.svg"; visible: true; enabled: presetList.canSelect() }
+                PropertyChanges { target: stopButton; visible: false }
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: true }
                 PropertyChanges { target: presetDetails; visible: false }
@@ -445,9 +465,10 @@ Window {
             State {
                 name: "preset.confirm"
                 PropertyChanges { target: button1; icon.source: "qrc:/icons/back.svg" }
-                PropertyChanges { target: button2; icon.source: "" }
-                PropertyChanges { target: button3; icon.source: ""}
-                PropertyChanges { target: button4; icon.source: "qrc:/icons/check.svg"; icon.color: "transparent" }
+                PropertyChanges { target: button2; icon.source: ""; enabled: true }
+                PropertyChanges { target: button3; icon.source: ""; enabled: true}
+                PropertyChanges { target: button4; icon.source: "qrc:/icons/check.svg"; visible: true; enabled: true }
+                PropertyChanges { target: stopButton; visible: false }
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: true }
@@ -456,9 +477,10 @@ Window {
             State {
                 name: "preset.run"
                 PropertyChanges { target: button1; icon.source: "qrc:/icons/menu.svg" }
-                PropertyChanges { target: button2; icon.source: "" }
-                PropertyChanges { target: button3; icon.source: "" }
-                PropertyChanges { target: button4; icon.source: "qrc:/icons/stop.svg"; icon.color: "red" }
+                PropertyChanges { target: button2; icon.source: "" ; enabled: true}
+                PropertyChanges { target: button3; icon.source: ""; enabled: true }
+                PropertyChanges { target: button4; visible: false }
+                PropertyChanges { target: stopButton; visible: true }
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
