@@ -49,22 +49,14 @@ Window {
         anchors.fill: parent
         fillMode: Image.PreserveAspectFit
         opacity: menu.state.endsWith("run") ? 1 : 0.33
-    }
 
-    // Part transparent rectangle overlaying the background image so we can
-    // shade the graph depending on conditions. e.g. red if we're too hot,
-    // blue too cold.
-    Rectangle {
-        id: shade
-        anchors.fill: parent
-        color: "transparent"
-
-        property color col
-        onColChanged: {
-            if (col == "#00000000")
-                color = "transparent"
-            else
-                color = Qt.rgba(col.r, col.g, col.b, 0.33)
+        // Part transparent rectangle overlaying the background image so we can
+        // shade the graph depending on conditions. e.g. red if we're too hot,
+        // blue too cold.
+        Rectangle {
+            id: shade
+            anchors.fill: parent
+            color: "transparent"
         }
     }
 
@@ -75,7 +67,7 @@ Window {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        height: iconSize
+        height: temperature.height
 
         Text {
             id: time
@@ -89,12 +81,21 @@ Window {
 
         Text {
             id: temperature
-            font.pixelSize: statusFontSize
-            font.weight: statusFontWeight
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             anchors.centerIn: parent
+            font.pixelSize: statusFontSize * 1.5
+            font.weight: statusFontWeight
             text: "---"
+        }
+        Text {
+            id: degreesSuffix
+            anchors.left: temperature.right
+            anchors.top: temperature.top
+            font.pixelSize: statusFontSize
+            font.weight: statusFontWeight
+            color: temperature.color
+            text: "°C"
         }
 
         Image {
@@ -560,13 +561,16 @@ Window {
         message = message.toLowerCase()
 
         if (message === "hot") {
-            shade.col = "red"
+            temperature.color = "red"
+            shade.color = "#55ff0000"
         }
         if (message === "cold") {
-            shade.col = "blue"
+            temperature.color = "blue"
+            shade.color = "#550055ff"
         }
         if (message === "ok") {
-            shade.col = "transparent"
+            temperature.color = "black"
+            shade.color = "transparent"
         }
         if (message.startsWith("pump")) {
             pump.visible = parameter(message) === "on"
@@ -610,7 +614,7 @@ Window {
         var formattedTemperature = "--"
         if (!isNaN(degreesC))
             formattedTemperature = degreesC.toPrecision(3)
-        return formattedTemperature + "°C"
+        return formattedTemperature
     }
 
     function formatTime(seconds) {
