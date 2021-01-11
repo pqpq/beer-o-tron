@@ -120,7 +120,7 @@ Window {
             RotationAnimator on rotation {
                 from: 0
                 to: 360
-                duration: 2000
+                duration: 1000
                 loops: Animation.Infinite
                 running: pump.visible
             }
