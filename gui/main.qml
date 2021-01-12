@@ -1,4 +1,11 @@
-﻿import QtQuick 2.12
+﻿/// @todo
+/// Should probably send "stop" when leaving the menu, or something, so it
+/// doesn't carry on with a program when you're fiddling in the menu thinking
+/// nothing's happening.
+
+/// "time" with no payload hides timer?
+
+import QtQuick 2.12
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 import QtQuick.Window 2.12
@@ -15,8 +22,8 @@ Window {
     visibility: runWindowed ? "Windowed" : "FullScreen"
 
     title: qsTr("Mash-o-MatiC")
-    width: 320//640
-    height: 240//480
+    width: 320
+    height: 240
 
     // Scale everything with screen size so it works on large screen during
     // development, and small screen on RPi.
@@ -34,6 +41,13 @@ Window {
     property int textSize: unitOfSize
     property int descriptionTextSize: textSize * 2/3
 
+    property int temperatureTextSize: unitOfSize * 3/2
+    property int temperatureBackgroundWidth: window.width / 2
+    property int temperatureBackgroundHeight: temperatureTextSize * 2
+
+    readonly property string backgroundColor: "lightgrey"
+    readonly property real backgroundOpacity: 0.75
+
     property ListModel presets: ListModel{}
 
     Messages {
@@ -50,7 +64,8 @@ Window {
         fillMode: Image.PreserveAspectFit
 
         // Simpler than having per-state PropertyChanges logic for opacity
-        opacity: menu.state.endsWith("run") ? 1 : 0.33
+        opacity: menu.state.endsWith("run") || (menu.state === "top") ? 1 : 0.25
+        Behavior on opacity { PropertyAnimation { duration: 200 }}
 
         // Part transparent rectangle overlaying the background image so we can
         // shade the graph depending on conditions. e.g. red if we're too hot,
@@ -185,6 +200,7 @@ Window {
         height: button1.height
         // Simpler than having per-state PropertyChanges logic for opacity
         opacity: menu.state.endsWith("run") ? 0.5 : 1
+        Behavior on opacity { PropertyAnimation { duration: 200 }}
 
         RoundButton {
             id: button1
@@ -257,8 +273,12 @@ Window {
 
         Rectangle {
             id: temperatureSetter
+            opacity: backgroundOpacity
+            color: backgroundColor
 
             anchors.centerIn: parent
+            width: temperatureBackgroundWidth
+            height: temperatureBackgroundHeight
 
             readonly property int decimals: 1
             readonly property real step: 0.1
@@ -289,7 +309,7 @@ Window {
 
             Text {
                 anchors.centerIn: parent
-                font.pixelSize: textSize * 1.5
+                font.pixelSize: temperatureTextSize
                 font.bold: true
                 text: parent.valueString + "°C"
             }
@@ -364,8 +384,8 @@ Window {
 
             Rectangle {
                 id: presetListBackground
-                color: "lightgrey"
-                opacity: 0.5
+                opacity: backgroundOpacity
+                color: backgroundColor
                 anchors.fill: parent
                 z: -1
             }
@@ -403,8 +423,8 @@ Window {
             id: presetDetailsBackground
             visible: presetDetails.visible
             anchors.fill: presetDetails
-            opacity: 0.5
-            color: "lightgrey"
+            opacity: backgroundOpacity
+            color: backgroundColor
             z: -1
         }
     }
