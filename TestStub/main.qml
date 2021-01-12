@@ -28,7 +28,7 @@ ApplicationWindow {
                 "Send messages:      H - hot       P - pump      Ctrl-P - pump on\n" +
                 "                    C - cold      E - heat      Ctrl-E - heat on\n" +
                 "                    K - ok        -/+ - change temperature\n" +
-                "                    S - stop      [/] - change time (</> 1 hour steps)\n" +
+                "                    0 - time 0    [/] - change time (</> 1 hour steps)\n" +
                 "                    L - hard coded presets      I - hard coded graph\n" +
                 "              1/2/3/4 - momentary key press     N - splash screen\n" +
                 "  B   - toggle responding to heartbeats\n" +
@@ -98,6 +98,10 @@ ApplicationWindow {
 
         Keys.onPressed: {
             switch (event.key) {
+            case Qt.Key_0:
+                messages.send("time 0")
+                event.accepted = true
+                break
             case Qt.Key_1:
                 messages.send("button 1")
                 event.accepted = true
@@ -163,10 +167,6 @@ ApplicationWindow {
                 break
             case Qt.Key_P:
                 messages.sendOptional("pump", event)
-                event.accepted = true
-                break
-            case Qt.Key_S:
-                messages.send("stop")
                 event.accepted = true
                 break
             case Qt.Key_Minus:

@@ -11,8 +11,7 @@ Message|Parameters|Meaning
 `ok` | | Sensor temperature is within permitted bounds.
 `pump` | [on] | Pump status. Any parameter other than 'on', or no parameter, signifies off.
 `heat` | [on] | Heater status. Any parameter other than 'on', or no parameter, signifies off.
-`time` | *seconds* | Time update.<br> *seconds* : (int) number of seconds since the run started.
-`stop` | | Hide the run timer.
+`time` | *seconds* | Time update.<br> *seconds* : (int) number of seconds since the run started.<br>Value of 0 hides time.
 `temp` | *degrees* | Temperature update.<br> *degrees* : (float) current sensor temperature in degrees Centigrade. 
 `heartbeat` | | Response to a heartbeat from the GUI. Never sent unrequested.
 `preset` | *name* *details* | A pre-set temperature profile.<br>*name* is a short name delimited with double quotes.<br>*details* is a longer description delimited with double quotes.
@@ -30,3 +29,4 @@ Message|Parameters|Meaning
 `allstop` |  | Stop heat and pump immediately.
 `list` |  | Request the list of pre-set profiles.<br>When this is sent the GUI clears its list, so any `preset` messages will populate the new list rather than overwrite the old.
 `run` | *name* | Run the pre-set temperature profile called *name* (delimited in double quotes).
+`idle` | | Stop the preset or set temperature program.

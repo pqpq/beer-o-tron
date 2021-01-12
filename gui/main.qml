@@ -459,7 +459,7 @@ Window {
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
 
-                readonly property var actions: [menu.noAction, temperatureSetter.decrease, temperatureSetter.increase, temperatureSetter.set]
+                readonly property var actions: [menu.idle, temperatureSetter.decrease, temperatureSetter.increase, temperatureSetter.set]
                 readonly property var nextStates: ["top", "", "", "set.run"]
             },
             State {
@@ -501,7 +501,7 @@ Window {
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: true }
 
-                readonly property var actions: [menu.noAction, menu.noAction, menu.noAction, presetList.run]
+                readonly property var actions: [menu.idle, menu.noAction, menu.noAction, presetList.run]
                 readonly property var nextStates: ["preset.choose", "", "", "preset.run"]
             },
             State {
@@ -561,6 +561,10 @@ Window {
         function allStop() {
             messages.send("allstop")
         }
+
+        function idle() {
+            messages.send("idle")
+        }
     }
 
     Timer {
@@ -609,15 +613,12 @@ Window {
             heater.visible = parameter(message) === "on"
         }
         if (message.startsWith("temp")) {
-            var degreesC = parseFloat(parameter(message))
+            const degreesC = parseFloat(parameter(message))
             temperature.text = formatTemperature(degreesC)
         }
         if (message.startsWith("time")) {
-            var seconds = parseInt(parameter(message))
+            const seconds = parseInt(parameter(message))
             time.text = formatTime(seconds)
-        }
-        if (message === "stop") {
-            time.text = ""
         }
         if (message === "heartbeat") {
             heartbeat.gotReply()
@@ -631,7 +632,11 @@ Window {
         if (message.startsWith("image")) {
             const indexOfPayload = message.indexOf(" ")
             if (indexOfPayload > 0) {
-                background.source = "file:" + message.slice(indexOfPayload + 1)
+                const newBackgroundImageSource = "file:" + message.slice(indexOfPayload + 1)
+                if (background.source === newBackgroundImageSource) {
+                    background.source = ""
+                }
+                background.source = newBackgroundImageSource
             }
         }
     }
@@ -650,6 +655,10 @@ Window {
     function formatTime(seconds) {
         var formattedTime = "-- s"
         if (!isNaN(seconds)) {
+            if (seconds === 0) {
+                return ""
+            }
+
             var h = Math.floor(seconds/3600)
             var m = Math.floor((seconds - h*3600)/60)
             var s = seconds % 60
