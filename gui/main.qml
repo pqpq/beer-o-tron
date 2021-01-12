@@ -737,5 +737,9 @@ Window {
             const isPressed = parts[2] === "down"
             buttonPressAndHoldTimer.buttonUpdate(button, isPressed)
         }
+        if (parts.length === 2) {
+            const button = parseInt(parts[1])
+            menu.buttonPressed(button)
+        }
     }
 }

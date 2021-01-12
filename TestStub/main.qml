@@ -30,7 +30,7 @@ ApplicationWindow {
                 "                    K - ok        -/+ - change temperature\n" +
                 "                    S - stop      [/] - change time (</> 1 hour steps)\n" +
                 "                    L - hard coded presets      I - hard coded graph\n" +
-                "                                                N - splash screen\n" +
+                "              1/2/3/4 - momentary key press     N - splash screen\n" +
                 "  B   - toggle responding to heartbeats\n" +
                 "space - toggle auto scroll\n"
         }
@@ -98,6 +98,22 @@ ApplicationWindow {
 
         Keys.onPressed: {
             switch (event.key) {
+            case Qt.Key_1:
+                messages.send("button 1")
+                event.accepted = true
+                break
+            case Qt.Key_2:
+                messages.send("button 2")
+                event.accepted = true
+                break
+            case Qt.Key_3:
+                messages.send("button 3")
+                event.accepted = true
+                break
+            case Qt.Key_4:
+                messages.send("button 4")
+                event.accepted = true
+                break
             case Qt.Key_B:
                 respondToHeartbeats = !respondToHeartbeats
                 if (respondToHeartbeats) {
