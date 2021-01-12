@@ -13,6 +13,8 @@ The problem with PyQT was that we couldn't get the QML to import QT modules. The
 
 [GUI modes](gui_modes.md)
 
+[Cross compiling for RPi](rpi_setup.md)
+
 ## Ideas
 Simple GUI, complicated Python. Use messages from python to create & remove buttons? Or hide & show pre-set buttons? So the GUI has no state and knows nothing about the logic?
 Might make Python too complicated. Maybe better to have some operating modes in GUI (setup, run etc) with fixed layouts, then the python would control the mode.
@@ -106,4 +108,13 @@ To test the actual gui:
     gui <f1 >f2
 
 or something similar.
+
+
+## Splash screen fonts
+https://www.fontspace.com/compaq-1982-font-f42638
+https://www.fontspace.com/rocket-script-font-f1092
+https://www.fontspace.com/fontdinerdotcom-jazz-font-f4891
+https://www.fontspace.com/flyboy-bb-font-f6939
+
+
 
