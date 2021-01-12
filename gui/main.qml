@@ -1,4 +1,6 @@
-﻿import QtQuick 2.12
+﻿// Sending the "run" message should happen after confirm, not select
+
+import QtQuick 2.12
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 import QtQuick.Window 2.12
@@ -38,7 +40,7 @@ Window {
 
     Messages {
         id: messages
-        onReceived: handle(message)
+        onReceived: decode(message)
     }
 
     // Background image. Normally the live temperature graph.
@@ -48,6 +50,8 @@ Window {
         id: background
         anchors.fill: parent
         fillMode: Image.PreserveAspectFit
+
+        // Simpler than having per-state PropertyChanges logic for opacity
         opacity: menu.state.endsWith("run") ? 1 : 0.33
 
         // Part transparent rectangle overlaying the background image so we can
@@ -133,38 +137,37 @@ Window {
             width: iconSize
             sourceSize.width: iconSize
 
-            // Normally we toggle between 0 and 1, so the user sees a constantly
-            // changing heart, which is a good sign.
-            // If we loose comms, we switch to 2 (problem) and the user sees the
+            // Normally we toggle between solidHeart and hollowHeart, so the user
+            // sees a beating heart, which means comms are live (i.e. things are good).
+            // If we loose comms, we switch to problem) and the user sees the
             // flashing problem icon.
-            // 0 = solid heart
-            // 1 = hollow heart
-            // 2 = problem
-            property int state: 0
+            readonly property int solidHeart: 0
+            readonly property int  hollowHeart: 1
+            readonly property int problem: 2
+            property int state: problem
 
             function heartbeat() {
-                state = state === 0 ? 1 : 0
+                state = state === solidHeart ? hollowHeart : solidHeart
                 setSource()
             }
             function setSource() {
-                opacity = 1
-                state = Math.max(state, 0)
-                state = Math.min(state, 2)
-                source = ["qrc:/icons/heart_solid.svg", "qrc:/icons/heart_border.svg", "qrc:/icons/problem.svg"][state]
+                visible = true
+                state = Math.max(state, solidHeart)
+                state = Math.min(state, problem)
+                const name = ["heart_solid.svg", "heart_border.svg", "problem.svg"][state]
+                source = "qrc:/icons/" + name
             }
-            function problem() {
-                if (state !== 2) {
-                    state = 2
-                    setSource()
-                }
+            function noHeartbeat() {
+                state = problem
+                setSource()
             }
             Timer {
+                id: iconFlasher
                 interval: 500
-                running: status.state === 2
+                running: status.state === status.problem
                 repeat: true
-                onTriggered: status.opacity = status.opacity ? 0 : 1
+                onTriggered: status.visible = !status.visible
             }
-            //onStateChanged: console.log("state=", state)
         }
     }
 
@@ -173,8 +176,8 @@ Window {
     // Icons are set depending on the state.
     // We use RoundButton because the appearance is good, but there's no way
     // to press them without a touch screen. Presses are simulated by linking
-    // to incoming messages. We emit signals in onClicked() so we can test
-    // with a mouse.
+    // to incoming 'button' messages. We emit signals in onClicked() so we can
+    // test with a mouse.
     Item {
         id: buttons
         anchors.left: parent.left
@@ -182,6 +185,7 @@ Window {
         anchors.bottom: parent.bottom
         anchors.bottomMargin: buttonBottomMargin
         height: button1.height
+        // Simpler than having per-state PropertyChanges logic for opacity
         opacity: menu.state.endsWith("run") ? 0.5 : 1
 
         RoundButton {
@@ -356,9 +360,8 @@ Window {
                 text: name
             }
 
-            // A background to give a bit of contrast and makes it obvious
-            // there's something there, even if there are few/no list entries.
             Rectangle {
+                id: presetListBackground
                 color: "lightgrey"
                 opacity: 0.5
                 anchors.fill: parent
@@ -396,11 +399,11 @@ Window {
         }
         Rectangle {
             id: presetDetailsBackground
-            anchors.fill: presetDetails
             visible: presetDetails.visible
-            z: -1
-            color: "lightgrey"
+            anchors.fill: presetDetails
             opacity: 0.5
+            color: "lightgrey"
+            z: -1
         }
     }
 
@@ -447,6 +450,7 @@ Window {
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
+
                 readonly property var actions: [menu.noAction, menu.noAction, menu.noAction, menu.allStop]
                 readonly property var nextStates: ["set.temperature", "", "", "top"]
             },
@@ -460,6 +464,7 @@ Window {
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: true }
                 PropertyChanges { target: presetDetails; visible: false }
+
                 readonly property var actions: [menu.noAction, presetList.down, presetList.up, presetList.select]
                 readonly property var nextStates: ["top", "", "", "preset.confirm"]
             },
@@ -473,6 +478,7 @@ Window {
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: true }
+
                 readonly property var nextStates: ["preset.choose", "", "", "preset.run"]
             },
             State {
@@ -485,6 +491,7 @@ Window {
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
+
                 readonly property var actions: [menu.noAction, menu.noAction, menu.noAction, menu.allStop]
                 readonly property var nextStates: ["preset.confirm", "", "", "top"]
             }
@@ -544,7 +551,7 @@ Window {
             if (missed > 4) {
                 /// @todo Do something more serious.
                 console.error("Hearbeat failed!")
-                status.problem()
+                status.noHeartbeat()
             }
             missed++
             messages.send("heartbeat")
@@ -556,7 +563,7 @@ Window {
         }
     }
 
-    function handle(message) {
+    function decode(message) {
         message = message.trim()
         message = message.toLowerCase()
 
