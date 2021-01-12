@@ -1,11 +1,4 @@
-﻿/// @todo
-/// Should probably send "stop" when leaving the menu, or something, so it
-/// doesn't carry on with a program when you're fiddling in the menu thinking
-/// nothing's happening.
-
-/// "time" with no payload hides timer?
-
-import QtQuick 2.12
+﻿import QtQuick 2.12
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 import QtQuick.Window 2.12
@@ -34,7 +27,7 @@ Window {
     property int statusFontWeight: Font.Bold
 
     property int buttonSize: window.width / 8
-    property int buttonBottomMargin: buttonSize / 8
+    property int buttonMargins: buttonSize / 10
 
     property int listWidth: window.width / 2
     property int listHeight: window.height / 2
@@ -186,17 +179,28 @@ Window {
 
     // Position 4 buttons along the bottom of the screen to line up with the
     // push buttons on the Adafruit 2315 screen.
-    // Icons are set depending on the state.
+    // Dimensions are:
+    //
+    // |         S  C  R  E  E  N        |
+    // +-------------- 45mm -------------+
+    // +---+     +---+     +---+     +---+
+    // | o |     | o |     | o |     | o |
+    // +---+     +---+     +---+     +---+
+    // :   :         :     :
+    // 6.2mm          6.7mm
+    //
+    // Button icons, visibility and enablement are set depending on the state.
+    //
     // We use RoundButton because the appearance is good, but there's no way
-    // to press them without a touch screen. Presses are simulated by linking
-    // to incoming 'button' messages. We emit signals in onClicked() so we can
-    // test with a mouse.
+    // to actually press them without a touch screen. Instead "presses" come from
+    // GPIO via incoming 'button' messages. We emit signals in onClicked() so we
+    // can still test with a mouse while developing.
     Item {
         id: buttons
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: buttonBottomMargin
+        anchors.margins: buttonMargins
         height: button1.height
         // Simpler than having per-state PropertyChanges logic for opacity
         opacity: menu.state.endsWith("run") ? 0.5 : 1
@@ -204,7 +208,7 @@ Window {
 
         RoundButton {
             id: button1
-            x: parent.width * (1/8) - width / 2
+            x: 0
             anchors.bottom: parent.bottom
 
             visible: icon.source != ""
@@ -215,7 +219,7 @@ Window {
 
         RoundButton {
             id: button2
-            x: parent.width * (3/8) - width / 2
+            x: (parent.width - width) * (1/3)
             anchors.bottom: parent.bottom
 
             visible: icon.source != ""
@@ -226,7 +230,7 @@ Window {
 
         RoundButton {
             id: button3
-            x: parent.width * (5/8) - width / 2
+            x: (parent.width - width) * (2/3)
             anchors.bottom: parent.bottom
 
             visible: icon.source != ""
@@ -237,7 +241,7 @@ Window {
 
         RoundButton {
             id: button4
-            x: parent.width * (7/8) - width / 2
+            x: parent.width - width
             anchors.bottom: parent.bottom
 
             visible: icon.source != ""
@@ -252,7 +256,7 @@ Window {
         // buttons who had not had their colour changed, when it was disabled.
         RoundButton {
             id: stopButton
-            x: parent.width * (7/8) - width / 2
+            x: parent.width - width
             anchors.bottom: parent.bottom
 
             visible: false
