@@ -1,6 +1,4 @@
-﻿// Sending the "run" message should happen after confirm, not select
-
-import QtQuick 2.12
+﻿import QtQuick 2.12
 import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.3
 import QtQuick.Window 2.12
@@ -342,12 +340,16 @@ Window {
 
             function select() {
                 let obj = model.get(currentIndex)
-                messages.send("run \"" + obj.name + '"')
                 presetDetails.name = obj.name
                 presetDetails.description = obj.description
             }
             function ensureSelectionIsVisible() {
                 positionViewAtIndex(currentIndex, ListView.Contain)
+            }
+
+            function run() {
+                let obj = model.get(currentIndex)
+                messages.send("run \"" + obj.name + '"')
             }
 
             delegate: Text {
@@ -479,6 +481,7 @@ Window {
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: true }
 
+                readonly property var actions: [menu.noAction, menu.noAction, menu.noAction, presetList.run]
                 readonly property var nextStates: ["preset.choose", "", "", "preset.run"]
             },
             State {
