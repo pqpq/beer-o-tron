@@ -121,8 +121,7 @@ To build mash-o-matic:
     ~/raspi/qt5/bin/qmake
     make
     scp gui pi@masher:/home/pi
-    # Not sure the -X is essential, but it silenced some warnings early on.
-    ssh -X pi@masher
+    ssh pi@masher
     ./gui 
 
 It works! But SVG doesn't, so go back in time and build qtsvg (see above).

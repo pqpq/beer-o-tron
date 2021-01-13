@@ -2,7 +2,10 @@
 
 *Although git stores the history of this documentation, I've kept old notes and the original thoughts here since they're useful background to the project.*
 
+The project started out being called the *Beer-o-tron*. It might even have become the *Beer-o-tron 5000* or something similarly silly and retro sci-fi. But it doesn't make beer. It only helps with one of the processes: [mashing](https://en.wikipedia.org/wiki/Mashing). So a pun on mashing was more appropriate, and Mash-o-matiC sounds like mathematics, so here we are. For some reason I had always pictured a logo like the names on [50's American cars](https://www.logodesignlove.com/vintage-vehicle-logotypes), and/or [Googie architecture](https://en.wikipedia.org/wiki/Googie_architecture), hence the '-o-' bit, and the splash screen logo.
+
 ## Hardware
+
 The first steps were to investigate how to make the hardware. We bought a few of the key components and [tested them](https://shed666.wordpress.com/2015/01/25/water-heater-testing/) then made a [prototype housing](https://shed666.wordpress.com/2015/01/08/water-heater-housing/).
 
 After this I made a heating coil out of 22mm pipe, got a larger element (800W, IIRC) and made the full loop (not documented yet).
@@ -17,14 +20,13 @@ I'm going to have to reverse engineer this as I made it at least 2 years ago, an
 
 ## Software
 
-This project has been sporadically active for many years. The original plan was to do everything in Python, partly as an educational project for our eldest child, and partly for me to refresh my Python knowledge. 
+This project has been sporadically active for many years. The original plan was to do everything in Python, partly as an educational project with our kids, and partly for me to refresh my Python knowledge. 
 
 We started out with PyQT and QML, but quickly got nowhere. I decided to go with C++/QML for the GUI (almost no C++, mainly QML), piping messages (simple text strings) to/from a separate python script which will do the clever controller things. The C++ side is my day job so not much of a challenge. The interesting bit is the Python.
 
 The problem with PyQT was that we couldn't get the QML to import QT modules. There doesn't seem to be much online help for this - PyQT seems to create applications the old 'designer' way - instantiate widgets in the python and wire up the UI there, rather than letting QML do it. We probably missed a configuration or deployment step but it was taking too long with no results. 
 
-
-Initially developed on Linux Mint 18.1 Cinnamon 64-bit. Now Linux Mint 20 Cinnamon.
+Developed started on Linux Mint 18.1 Cinnamon 64-bit. Now it is on Linux Mint 20 Cinnamon.
 
 ### Initial Ideas
 * Simple GUI, complicated Python. 
@@ -99,4 +101,5 @@ and
 
 then terminal 1 shows output from the GUI (e.g. heartbeats, mode changes) and typing in terminal 1 sends the results to the GUI as though it was the Python core.
 
+This has all been superceded by the TestStub.
 

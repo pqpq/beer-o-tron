@@ -1,9 +1,17 @@
 # Mash-o-matiC
-A heating controller for homebrew beer [mashing](https://en.wikipedia.org/wiki/Mashing). The project was formerly known as the Beer-o-tron, and there are [old notes here](history.md).
+
+[Messages](messages.md)
+[GUI Modes & States](gui_modes.md)
+[Cross Compiling For RPi](rpi_setup.md)
+[Temperature Profile File Format](file_format.md)
+[Todo List](todo.md)
+[Project History](history.md).
+
+A heating controller for homebrew beer [mashing](https://en.wikipedia.org/wiki/Mashing).
 
 ![Photgraph of Mash-o-matiC RPi](mash-o-matic.png)
 
-This is a collection of software that will run on an RPi with an [Adafruit 2315](https://www.adafruit.com/product/2315) - a 2.2" TFT screen with four push buttons. Originally it was going to be a touch screen, but push buttons will be more reliable with wet hands. 
+This repo is a collection of software that will run on an RPi with an [Adafruit 2315](https://www.adafruit.com/product/2315) - a 2.2" TFT screen with four push buttons (as shown in the photo). Originally it was going to be a touch screen, but push buttons will be more reliable with wet hands. 
 
 The software is in three parts:
 * A core application written in Python3, doing GPIO and maintaining the chosen temperature profile.
