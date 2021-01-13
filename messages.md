@@ -11,11 +11,11 @@ Message|Parameters|Meaning
 `ok` | | Sensor temperature is within permitted bounds.
 `pump` | [on] | Pump status. Any parameter other than 'on', or no parameter, signifies off.
 `heat` | [on] | Heater status. Any parameter other than 'on', or no parameter, signifies off.
-`time` | *seconds* | Time update.<br> *seconds* : (int) number of seconds since the run started.<br>Value of 0 hides time.
+`time` | *seconds* | Time update.<br> *seconds* : (int) number of seconds since the run started.<br>A value of 0 indicates no run is in progress and the time can be hidden.
 `temp` | *degrees* | Temperature update.<br> *degrees* : (float) current sensor temperature in degrees Centigrade. 
 `heartbeat` | | Response to a heartbeat from the GUI. Never sent unrequested.
 `preset` | *name* *details* | A pre-set temperature profile.<br>*name* is a short name delimited with double quotes.<br>*details* is a longer description delimited with double quotes.
-`button` | *number* up&#124;down | Button *number* is pressed or released.<br>Buttons are numbered 1-4, from left to right.
+`button` | *number* [up&#124;down] | Button *number* is pressed or released.<br>With neither 'up' or 'down', a momentary press is simulated.<br>Buttons are numbered 1-4, from left to right.
 `image` | *filename* | Set the background image to *filename*.<br>Resent to reload the same image whenever it changes.
 
 
