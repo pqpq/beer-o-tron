@@ -1,11 +1,11 @@
 # Mash-o-matiC
 
-[Messages](messages.md)
-[GUI Modes & States](gui_modes.md)
-[Cross Compiling For RPi](rpi_setup.md)
-[Temperature Profile File Format](file_format.md)
-[Todo List](todo.md)
-[Project History](history.md).
+[Messages](messages.md)<br>
+[GUI Modes & States](gui_modes.md)<br>
+[Cross Compiling For RPi](rpi_setup.md)<br>
+[Temperature Profile File Format](file_format.md)<br>
+[Todo List](todo.md)<br>
+[Project History](history.md).<br>
 
 A heating controller for homebrew beer [mashing](https://en.wikipedia.org/wiki/Mashing).
 
@@ -56,18 +56,10 @@ Early ideas included a completely dumb GUI with the Python code telling it which
 The system has a GUI that knows what its doing and communicates with the core at a higher level. The GUI moves through a number of [states](gui_modes.md).
 
 ### Temperature Profiles
-*Not implemented yet*
 
-These files will be stored on the Pi, and the Python core will send a list of them to the GUI.
+Each temperature profile is [stored in a file](file_format.md) somewhere on the Pi. How they get there is TBD, but probably by FTP or SCP. Generating them in the GUI will not be trivial.
 
-We need a file format for non-trivial mash profiles:
-* Short name (listed in the GUI). E.g "Wheat beer"
-* Details. A few sentences, shown to the user in the GUI so they don't have to guess what the short name entails, before committing to a run. E.g. "40' rest for 30mins"
-* Data points
-    * Desired temperature, and how long to hold it
-    * Ramps: start and end temperature, and how long to take. 
-
-Ramping the temperature: you can't just go from one temperature to another as fast as possible, as the rate of change might be too high (if the heater is powerful enough). The rule of thumb in all the brewing books is 1 degree per minute. I don't really know why. Possibly because if you exceed this you risk localised boiling which denatures the enzymes. I don't really see why you can't exceed this if you have the right heating technology. Maybe the enzymes don't like sudden change?
+The Python core will send a list of profile names and details to the GUI when the user wants to choose one. The GUI then sends back the `run` message with the chosen profile name.
 
 ## Tools
 
