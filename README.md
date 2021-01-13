@@ -1,5 +1,7 @@
 # Mash-o-matiC
-A heating controller for homebrew beer [mashing](https://en.wikipedia.org/wiki/Mashing) (formerly known as the Beer-o-tron). [Project history](history.md).
+A heating controller for homebrew beer [mashing](https://en.wikipedia.org/wiki/Mashing). The project was formerly known as the Beer-o-tron, and there are [old notes here](history.md).
+
+![Photgraph of Mash-o-matiC RPi](mash-o-matic.png)
 
 This is a collection of software that will run on an RPi with an [Adafruit 2315](https://www.adafruit.com/product/2315) - a 2.2" TFT screen with four push buttons. Originally it was going to be a touch screen, but push buttons will be more reliable with wet hands. 
 
@@ -95,4 +97,13 @@ Some possible fonts to use for the "product" logo:
 * https://www.fontspace.com/flyboy-bb-font-f6939
 
 In the end I went for Flyboy-BB.
+
+## Todo
+
+- [ ] Make sure core doesn't restart when the same `set` is sent - this could be the user checking the details
+- [ ] Make sure the core switches to the splash screen when `idle` is sent. Or ... keep the previous graph, so user can see what happened?
+- [ ] How do we alert the user the preset has finished?
+- [ ] Entry in pre-set file format for final action - heat off? Maintain mash out at X degrees ?
+- [ ] Consider a web interface? Could simply be the graph, no interaction.
+- [ ] Can we ever have a GUI mode for entering a new preset? Very complex with just 4 buttons - for each point we need temp +/- and time +/-. Need to be able to add and remove points. Alphanumeric entry for name and details will be a real chore.
 
