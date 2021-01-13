@@ -1,7 +1,7 @@
 # Mash-o-matiC
 A heating controller for homebrew beer [mashing](https://en.wikipedia.org/wiki/Mashing) (formerly known as the Beer-o-tron). [Project history](history.md).
 
-This is a collection of software that will run on an RPi with an Adafruit 2315 - a 2.2" TFT screen with four push buttons. https://www.adafruit.com/product/2315. Originally it was going to be a touch screen, but push buttons will be more reliable with wet hands. 
+This is a collection of software that will run on an RPi with an [Adafruit 2315](https://www.adafruit.com/product/2315) - a 2.2" TFT screen with four push buttons. Originally it was going to be a touch screen, but push buttons will be more reliable with wet hands. 
 
 The software is in three parts:
 * A core application written in Python3, doing GPIO and maintaining the chosen temperature profile.
@@ -9,7 +9,7 @@ The software is in three parts:
 * GnuPlot to make nice temperature graphs as we go. It is quicker and easier to use this than spend ages hand crafting graphing code.
 
 The hardware is:
-* An RPi, screen and buttons
+* An RPi, small screen and push buttons
 * A coil of copper pipe that is immersed in the mash tun
 * A heating element and pump, in a loop connected to the coil
 * Temperature sensor(s) in the mash tun
@@ -21,11 +21,12 @@ How it works:
 * As time passes the core will record actual temperature and target temperature in a log file
 * Periodically the core will invoke GnuPlot to turn the temperature log into a graph and send it to the GUI code to display
 
-## Design
-### Messaging
-I decided that to keep the GUI simple and allow it to be developed in isolation, it would send and receive messages on stdin and stdout. In the final system it will communicate with the Python core over pipes. This has the benefit of being able to test the GUI by itself from the command line.
+The demands on the Pi are low, so eventually this could be deployed on the lowest spec Pi possible.
 
-[Messages](messages.md)
+## Design
+
+### Messaging
+I decided that to keep the GUI simple and allow it to be developed in isolation, it will send and receive [messages](messages.md) on stdin and stdout. In the final system it will communicate with the Python core over pipes. This has the benefit of being able to test the GUI by itself from the command line.
 
 ### TestStub
 
@@ -40,9 +41,9 @@ To test the gui:
     gui <f1 >f2
 
 ### GUI Modes
-Early ideas included a completely dumb GUI with the Python code telling it which buttons to show, and receiving each button press. This would mean the Python core would have to contain the basic UI logic as well as the "real" core of the project: the temperature control. In the end the GUI knows what its doing and communicates with the core at a higher level.
+Early ideas included a completely dumb GUI with the Python code telling it which buttons to show, and receiving each button press. This would mean the Python core would have to contain the basic UI logic as well as the "real" core of the project: the temperature control. 
 
-[GUI modes](gui_modes.md)
+The system has a GUI that knows what its doing and communicates with the core at a higher level. The GUI moves through a number of [states](gui_modes.md).
 
 ### Temperature Profiles
 *Not implemented yet*

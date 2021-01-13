@@ -9,10 +9,10 @@ This is all basically following these instructions: https://wiki.qt.io/Raspberry
 
 ## Target
 
-A brand new Model 3 B, caller 'masher'.
-
+A brand new Model 3 B, caller `masher`. Your hostname may vary.
 
 On the RPi:
+
     sudo nano /etc/apt/sources.list
     # then uncomment the deb-src line
     sudo apt-get update
@@ -30,7 +30,7 @@ On the host, get the cross-compiler:
     cd raspi
     git clone https://github.com/raspberrypi/tools
 
-Then this lot seems to be copying the libs and general build environment from the Pi to the local machine, presumably so when we cross compile we have all the right libs ready and waiting, rather than having to create some kind of cross compile environment that may or may not match the target:
+Then this lot seems to be copying the libs and general build environment from the Pi to the local machine. Presumably so that when we cross compile we have all the right libs ready and waiting. Otherwise we'd have to create some kind of cross compile environment that may or may not match the target:
 
     mkdir sysroot sysroot/usr sysroot/opt
     rsync -avz pi@masher:/lib sysroot
@@ -87,7 +87,7 @@ Now build a version of Qt for the RPi with all the Qt modules we need:
     cd ..
 
 
-At this point we have Qt5 libs, headers and plugins in ~/raspi/qt5Pi, ready for copying back to the Pi. Remember to do this every time a new module is added, or rebuilt:
+At this point we have Qt5 libs, headers and plugins in `~/raspi/qt5Pi`, ready for copying back to the Pi. **Remember to do this every time a new module is added, or rebuilt**:
 
     rsync -avz ~/raspi/qt5pi pi@masher:/usr/local
 
