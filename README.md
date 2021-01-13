@@ -1,15 +1,15 @@
 # Mash-o-matiC
 
-[Messages](messages.md)<br>
-[GUI Modes & States](gui_modes.md)<br>
-[Cross Compiling For RPi](rpi_setup.md)<br>
-[Temperature Profile File Format](file_format.md)<br>
-[Todo List](todo.md)<br>
-[Project History](history.md).<br>
+[Messages](doc/messages.md)<br>
+[GUI Modes & States](doc/gui_modes.md)<br>
+[Cross Compiling For RPi](doc/rpi_setup.md)<br>
+[Temperature Profile File Format](doc/file_format.md)<br>
+[Todo List](doc/todo.md)<br>
+[Project History](doc/history.md).<br>
 
 A heating controller for homebrew beer [mashing](https://en.wikipedia.org/wiki/Mashing).
 
-![Photgraph of Mash-o-matiC RPi](mash-o-matic.png)
+![Photgraph of Mash-o-matiC RPi](doc/mash-o-matic.png)
 
 This repo is a collection of software that will run on an RPi with an [Adafruit 2315](https://www.adafruit.com/product/2315) - a 2.2" TFT screen with four push buttons (as shown in the photo). Originally it was going to be a touch screen, but push buttons will be more reliable with wet hands. 
 
@@ -36,7 +36,7 @@ The demands on the Pi are low, so eventually this could be deployed on the lowes
 ## Design
 
 ### Messaging
-I decided that to keep the GUI simple and allow it to be developed in isolation, it will send and receive [messages](messages.md) on stdin and stdout. In the final system it will communicate with the Python core over pipes. This has the benefit of being able to test the GUI by itself from the command line.
+I decided that to keep the GUI simple and allow it to be developed in isolation, it will send and receive [messages](doc/messages.md) on stdin and stdout. In the final system it will communicate with the Python core over pipes. This has the benefit of being able to test the GUI by itself from the command line.
 
 ### TestStub
 
@@ -53,18 +53,18 @@ To test the gui:
 ### GUI Modes
 Early ideas included a completely dumb GUI with the Python code telling it which buttons to show, and receiving each button press. This would mean the Python core would have to contain the basic UI logic as well as the "real" core of the project: the temperature control. 
 
-The system has a GUI that knows what its doing and communicates with the core at a higher level. The GUI moves through a number of [states](gui_modes.md).
+The system has a GUI that knows what its doing and communicates with the core at a higher level. The GUI moves through a number of [states](doc/gui_modes.md).
 
 ### Temperature Profiles
 
-Each temperature profile is [stored in a file](file_format.md) somewhere on the Pi. How they get there is TBD, but probably by FTP or SCP. Generating them in the GUI will not be trivial.
+Each temperature profile is [stored in a file](doc/file_format.md) somewhere on the Pi. How they get there is TBD, but probably by FTP or SCP. Generating them in the GUI will not be trivial.
 
 The Python core will send a list of profile names and details to the GUI when the user wants to choose one. The GUI then sends back the `run` message with the chosen profile name.
 
 ## Tools
 
 This is a classic cross-compiled embedded system. The details of setting up the cross-compiler warrant their own page:
-[cross compiling for RPi](rpi_setup.md)
+[cross compiling for RPi](doc/rpi_setup.md)
 
 ### Host
 * Developed on a Linux PC
@@ -97,13 +97,4 @@ Some possible fonts to use for the "product" logo:
 * https://www.fontspace.com/flyboy-bb-font-f6939
 
 In the end I went for Flyboy-BB.
-
-## Todo
-
-- [ ] Make sure core doesn't restart when the same `set` is sent - this could be the user checking the details
-- [ ] Make sure the core switches to the splash screen when `idle` is sent. Or ... keep the previous graph, so user can see what happened?
-- [ ] How do we alert the user the preset has finished?
-- [ ] Entry in pre-set file format for final action - heat off? Maintain mash out at X degrees ?
-- [ ] Consider a web interface? Could simply be the graph, no interaction.
-- [ ] Can we ever have a GUI mode for entering a new preset? Very complex with just 4 buttons - for each point we need temp +/- and time +/-. Need to be able to add and remove points. Alphanumeric entry for name and details will be a real chore.
 
