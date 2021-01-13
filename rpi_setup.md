@@ -1,10 +1,10 @@
-# Cross Compiling for RPi
+# Cross Compiling a Qt Application for RPi
 
 The full RPi installer doesn't seem to have Qt5 libraries installed by default, 
 and even if it did they're not the latest and greatest, so we have to build
 them ourselves.
 
-This is all basically following these instructions: https://wiki.qt.io/RaspberryPi2EGLFS
+This is all basically following these instructions: https://wiki.qt.io/RaspberryPi2EGLFS but with a few extra steps for additional Qt modules, and my interpretation of what is going on (which is a bit lacking in the original instructions).
 
 
 ## Target
@@ -12,7 +12,7 @@ This is all basically following these instructions: https://wiki.qt.io/Raspberry
 A brand new Model 3 B, caller 'masher'.
 
 
-On RPi:
+On the RPi:
     sudo nano /etc/apt/sources.list
     # then uncomment the deb-src line
     sudo apt-get update
@@ -24,13 +24,13 @@ On RPi:
 
 ## Host
 
-On host, get the cross-compiler:
+On the host, get the cross-compiler:
 
     mkdir raspi
     cd raspi
     git clone https://github.com/raspberrypi/tools
 
-Then this lot seems to be copying the libs and general build environment from the Pi to the local machine, presumably so when we cross compile we have all the right libs ready and waiting, rather than having to create some kind of cross compile environment:
+Then this lot seems to be copying the libs and general build environment from the Pi to the local machine, presumably so when we cross compile we have all the right libs ready and waiting, rather than having to create some kind of cross compile environment that may or may not match the target:
 
     mkdir sysroot sysroot/usr sysroot/opt
     rsync -avz pi@masher:/lib sysroot
@@ -44,6 +44,7 @@ Then this lot seems to be copying the libs and general build environment from th
 
 Now build a version of Qt for the RPi with all the Qt modules we need:
 
+    # Basic QT libraries:
     git clone git://code.qt.io/qt/qtbase.git -b 5.12
     cd qtbase
     ./configure -release -opengl es2 -device linux-rasp-pi3-g++ -device-option CROSS_COMPILE=~/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin/arm-linux-gnueabihf- -sysroot ~/raspi/sysroot -opensource -confirm-license -make libs -prefix /usr/local/qt5pi -extprefix ~/raspi/qt5pi -hostprefix ~/raspi/qt5 -v
@@ -86,20 +87,13 @@ Now build a version of Qt for the RPi with all the Qt modules we need:
     cd ..
 
 
-At this point we have Qt5 libs, headers and plugins in ~/raspi/qt5Pi, ready for copying back to the Pi.
+At this point we have Qt5 libs, headers and plugins in ~/raspi/qt5Pi, ready for copying back to the Pi. Remember to do this every time a new module is added, or rebuilt:
 
-    cd .. 
-    rsync -avz qt5pi pi@masher:/usr/local
+    rsync -avz ~/raspi/qt5pi pi@masher:/usr/local
 
-Prove it works:
+The first time the libraries are copied to the Pi:
 
-    # on host
-    cd qtbase/examples/opengl/qopenglwidget
-    ~/raspi/qt5/bin/qmake
-    make
-    scp qopenglwidget pi@masher:/home/pi
-
-    # on pi
+    # On the pi
     echo /usr/local/qt5pi/lib | sudo tee /etc/ld.so.conf.d/qt5pi.conf
     sudo ldconfig
 
@@ -110,19 +104,30 @@ Prove it works:
     sudo ln -s /opt/vc/lib/libbrcmEGL.so    /opt/vc/lib/libEGL.so 
     sudo ln -s /opt/vc/lib/libbrcmGLESv2.so /opt/vc/lib/libGLESv2.so
 
-It segfaults. Hmmm.
+Then prove it works (this step is from the [original instructions](https://wiki.qt.io/RaspberryPi2EGLFS) ):
+
+    # on host
+    cd qtbase/examples/opengl/qopenglwidget
+    ~/raspi/qt5/bin/qmake
+    make
+    scp qopenglwidget pi@masher:/home/pi
+
+But it segfaulted. Hmmm. Since I don't care about OpenGL specifically, instead of investigating I tried my code instead...
 
 To build mash-o-matic:
 
     cd path/to/beer-o-tron/gui
+    # only need qmake if the project file has been altered
     ~/raspi/qt5/bin/qmake
     make
     scp gui pi@masher:/home/pi
-
+    # Not sure the -X is essential, but it silenced some warnings early on.
     ssh -X pi@masher
     ./gui 
 
 It works! But SVG doesn't, so go back in time and build qtsvg (see above).
+
+Repeat these last steps ad infinitum until the "product" is ready to ship.
 
 
 

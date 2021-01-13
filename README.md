@@ -1,120 +1,97 @@
 # Mash-o-matiC
-Homebrew beer mash heater controller (formerly known as the Beer-o-tron)
+A heating controller for homebrew beer [mashing](https://en.wikipedia.org/wiki/Mashing) (formerly known as the Beer-o-tron). [Project history](history.md).
 
-This is the software that will run on a RPi with a small very small screen. Application written in Python3, using PyQT, with GUI written in QML (effectively Javascript). Originally it was going to be a touch screen, but now its an Adafruit 2315 - 2.2" TFT screen with four push buttons. These will be more reliable with wet hands. https://www.adafruit.com/product/2315
+This is a collection of software that will run on an RPi with an Adafruit 2315 - a 2.2" TFT screen with four push buttons. https://www.adafruit.com/product/2315. Originally it was going to be a touch screen, but push buttons will be more reliable with wet hands. 
 
-A script running periodically will read temperature from a number of sensors and create a live graph which the application will display in the background. Application will use the temperature readings to decide whether to turn on the heater and pump, according to a pre-set temperature profile (e.g. maintain 66'C for mashing).
+The software is in three parts:
+* A core application written in Python3, doing GPIO and maintaining the chosen temperature profile.
+* A GUI written in C++/Qt using QtQuick so the actual GUI code is written in QML (effectively Javascript). In reality there is hardly any C++.
+* GnuPlot to make nice temperature graphs as we go. It is quicker and easier to use this than spend ages hand crafting graphing code.
 
-After getting nowhere with PyQT and QML, we decided to go with C++/QML for the GUI (almost no C++, mainly QML), piping messages (simple text strings) to/from a separate python script which will do the clever controller things.
+The hardware is:
+* An RPi, screen and buttons
+* A coil of copper pipe that is immersed in the mash tun
+* A heating element and pump, in a loop connected to the coil
+* Temperature sensor(s) in the mash tun
+* Electronics allowing the heater and pump to be controlled by RPi GPIO.
 
-The problem with PyQT was that we couldn't get the QML to import QT modules. There doesn't seem to be much online help for this - PyQT seems to create applications the old 'designer' way - instantiate widgets in the python and wire up the UI there, rather than letting QML do it. We probably missed a configuration or deployment step but it was taking too long with no results. Since I use Qt/C++/QML for work, a C++ app is a doddle, and the UI aspects of this aren't the interesting bits. With luck the UI will be trivial.
+How it works:
+* The user will choose either a set fixed temperature to maintain, or a temperature profile (different temereratures at different times). 
+* The core will read temperature from a number of sensors and decide whether to turn on the heater and pump, according to a pre-set temperature profile (e.g. maintain 66'C for mashing).
+* As time passes the core will record actual temperature and target temperature in a log file
+* Periodically the core will invoke GnuPlot to turn the temperature log into a graph and send it to the GUI code to display
+
+## Design
+### Messaging
+I decided that to keep the GUI simple and allow it to be developed in isolation, it would send and receive messages on stdin and stdout. In the final system it will communicate with the Python core over pipes. This has the benefit of being able to test the GUI by itself from the command line.
 
 [Messages](messages.md)
 
-[GUI modes](gui_modes.md)
-
-[Cross compiling for RPi](rpi_setup.md)
-
-## Ideas
-Simple GUI, complicated Python. Use messages from python to create & remove buttons? Or hide & show pre-set buttons? So the GUI has no state and knows nothing about the logic?
-Might make Python too complicated. Maybe better to have some operating modes in GUI (setup, run etc) with fixed layouts, then the python would control the mode.
-
-## Notes
-
-Initially developed on Linux Mint 18.1 Cinnamon 64-bit.
-Now Linux Mint 20 Cinnamon.
-
-### Pipes and Testing
-We decided that the GUI would send and receive messages on stdin and stdout. In the final system it would communicate with the Python core over pipes. This has the benefit of being able to test the GUI by itself from the command line.
-
-At one point I had the GUI talking to <something> in a second terminal, using two named pipes, but I didn't take notes and I can't for the life of me work out what I did. It echoed the output from the GUI, and you could type commands to the GUI.
-
-https://unix.stackexchange.com/questions/53641/how-to-make-bidirectional-pipe-between-two-programs
-
-Open 2 terminals in the Qt build directory. In either, create 2 named pipes. In one, run ??? and in the other run the GUI:
-
-    terminal1 $ mkfifo f1 f2
-    terminal1 $ cat >f1 <f2   # this echoes hearbeats back, but you can't type
-    terminal1 $ echo >f1 <f2
-
-and
-
-    terminal2 $ ./gui <f1 >f2
-
-then terminal 1 shows output from the GUI (e.g. heartbeats, mode changes) and typing in terminal 1 sends the results to the GUI as though it was the python core.
-
-### Icons
-https://material.io/tools/icons/?style=baseline
-
-### Installing PyQt
-
-Software Manager
-
-Python3-pyqt5
-
-PyQt5 exposes the Qt5 API to Python 3. This package contains the following modules:
-* QtCore
-* QtDBus
-* QtDesigner
-* QtGui
-* QtHelp
-* QtNetwork
-* QtPrintSupport
-* QtTest
-* QtWidgets
-* QtXml
-
-
-Python3-pyqt5.qtquick
-
-The QtQuick module of PyQt5 provides a framework for developing applications and libraries with the QML language.
-
-This package contains the Python 3 version of this module.
-
-### Installing Qt (core)
-Simple test main.qml wouldn't run so we needed to install Qt as well.
-https://www.qt.io/download
-Open source version.
-qt-unified-linux-x64-4.0.1-online.run
-installed to /opt
-chose 5.15.2
-
-### QtCreator
-Struggled to get anything to build & link.
-
-    /usr/bin/ld: cannot find -lGL
-Answer: https://stackoverflow.com/questions/18406369/qt-cant-find-lgl-error
-
-We did this:
-
-    sudo ln -s /usr/lib/x86_64-linux-gnu/mesa/libGL.so.1 /usr/lib/libGL.so
-
-or
-
-    sudo ln -s /usr/lib/x86_64-linux-gnu/libGL.so.1 /usr/lib/libGL.so
-
 ### TestStub
 
-Simple test app that can be connected to gui through pipes:
+To test the GUI code, I wrote a simple test app that can be connected to GUI through pipes.
+It can inject all types of message, and echoes anything sent back. This makes it far easier to develop the GUI than running it up on the RPi target system.
 
-    mkfifo f1 f2
-    TestStub >f1 <f2 & cat <f1 >f2
-
-which can inject all types of message, and echoes anything sent back.
-To test the actual gui:
+To test the gui:
 
     mkfifo f1 f2
     TestStub >f1 <f2
+    # in a second terminal, or from QtCreator:
     gui <f1 >f2
 
-or something similar.
+### GUI Modes
+Early ideas included a completely dumb GUI with the Python code telling it which buttons to show, and receiving each button press. This would mean the Python core would have to contain the basic UI logic as well as the "real" core of the project: the temperature control. In the end the GUI knows what its doing and communicates with the core at a higher level.
+
+[GUI modes](gui_modes.md)
+
+### Temperature Profiles
+*Not implemented yet*
+
+These files will be stored on the Pi, and the Python core will send a list of them to the GUI.
+
+We need a file format for non-trivial mash profiles:
+* Short name (listed in the GUI). E.g "Wheat beer"
+* Details. A few sentences, shown to the user in the GUI so they don't have to guess what the short name entails, before committing to a run. E.g. "40' rest for 30mins"
+* Data points
+    * Desired temperature, and how long to hold it
+    * Ramps: start and end temperature, and how long to take. 
+
+Ramping the temperature: you can't just go from one temperature to another as fast as possible, as the rate of change might be too high (if the heater is powerful enough). The rule of thumb in all the brewing books is 1 degree per minute. I don't really know why. Possibly because if you exceed this you risk localised boiling which denatures the enzymes. I don't really see why you can't exceed this if you have the right heating technology. Maybe the enzymes don't like sudden change?
+
+## Tools
+
+This is a classic cross-compiled embedded system. The details of setting up the cross-compiler warrant their own page:
+[cross compiling for RPi](rpi_setup.md)
+
+### Host
+* Developed on a Linux PC
+* Qt 5.15.2
+* QtCreator 4.14.0
+* Python 3
+
+### Target
+* RPi Model 3 B
+* Adafruit 2315 - a 2.2" TFT screen with four push buttons.
+* Install [Pi TFT Hat drivers](https://learn.adafruit.com/adafruit-2-2-pitft-hat-320-240-primary-display-for-raspberry-pi/easy-install)
+* No keyboard, mouse, or monitor
+* Ethernet during development
+* Might enable WiFi so we can update the software, and download new temperature profiles
 
 
-## Splash screen fonts
-https://www.fontspace.com/compaq-1982-font-f42638
-https://www.fontspace.com/rocket-script-font-f1092
-https://www.fontspace.com/fontdinerdotcom-jazz-font-f4891
-https://www.fontspace.com/flyboy-bb-font-f6939
+## Visual Aspects
 
+### Icons
 
+UI icons are taken from here, where possible. https://material.io/tools/icons/?style=baseline
+
+### Splash screen fonts
+
+Some possible fonts to use for the "product" logo:
+
+* https://www.fontspace.com/compaq-1982-font-f42638
+* https://www.fontspace.com/rocket-script-font-f1092
+* https://www.fontspace.com/fontdinerdotcom-jazz-font-f4891
+* https://www.fontspace.com/flyboy-bb-font-f6939
+
+In the end I went for Flyboy-BB.
 
