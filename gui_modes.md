@@ -1,4 +1,4 @@
-# GUI States
+# The GUI
 
 ## Layout
 The current temperature will always be displayed, as this is critical information for any/all modes.
@@ -50,7 +50,7 @@ General points:
 | 1      | X    | Send `idle`| Top        |
 | 2      | -    | Decrease temperature |  |
 | 3      | +    | Increase temperature |  |
-| 4      | Tick | Send `set` with temperature | Set Run |
+| 4      | Tick | Send `set <temperature>` | Set Run |
 
 ## Set Run
 
@@ -78,14 +78,14 @@ General points:
 
 ## Preset Confirm
 
-* Displays the name of the chosen presets and below it the details so the user can check it is the right one before confirming the selection.
+* Displays the name of the chosen presets, and below it the details, so the user can check it is the right one before confirming the selection.
 
 | Button | Icon | Action | Next State |
 |--------|------|--------|------------|
 | 1      | Back | Send `idle` | Preset Choose |
 | 2      |      |        |            |
 | 3      |      |        |            |
-| 4      | Tick | Send `run` with preset name | Preset Run |
+| 4      | Tick | Send `run <preset name>` | Preset Run |
 
 ## Preset Run
 
@@ -95,7 +95,7 @@ General points:
 
 | Button | Icon | Action | Next State |
 |--------|------|--------|------------|
-| 1      | Menu |        | Set Confirm |
+| 1      | Menu |        | Preset Confirm |
 | 2      |      |        |            |
 | 3      |      |        |            |
 | 4      | Stop | Send `allstop` | Top |
