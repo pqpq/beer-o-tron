@@ -98,3 +98,12 @@ Some possible fonts to use for the "product" logo:
 
 In the end I went for Flyboy-BB.
 
+## Development
+
+Now that the Python core is in the mix we can test with the real things:
+
+    # gui has been scp'd from the host machine after cross compilation
+    cd ~
+    mkfifo pipe
+    python3 beer-o-tron/core/core.py < pipe | ./gui > pipe
+
