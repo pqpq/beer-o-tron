@@ -2,7 +2,6 @@
 
 import sys
 import select
-import io
 from gpiozero import Button
 from time import sleep
 
@@ -30,10 +29,16 @@ button3.when_released = sendUp(3)
 button4.when_pressed = sendDown(4)
 button4.when_released = sendUp(4)
 
+heartbeatCount = 0
+
 def decodeMessage(message):
     # Echo heartbeats so GUI is happy
     if (message.startswith("heartbeat")):
         sendMessage(message)
+        global heartbeatCount
+        if heartbeatCount == 0:
+            sendMessage("image /opt/mash-o-matic/splash.png")
+        heartbeatCount = heartbeatCount + 1
 
 # Fake some stuff for now
 import random
