@@ -107,3 +107,44 @@ Now that the Python core is in the mix we can test with the real things:
     mkfifo pipe
     python3 beer-o-tron/core/core.py < pipe | ./gui > pipe
 
+
+### Getting temperature sensors working
+
+Experimenting with a few of [these sensors](https://thepihut.com/collections/adafruit-sensors/products/waterproof-ds18b20-digital-temperature-sensor-extras),
+to measure temperature at differnet positions within the mash tun:
+
+
+Follwing [these instructions](https://cdn-learn.adafruit.com/downloads/pdf/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing.pdf)
+
+
+    sudo raspi-config
+    # Select Interfacing Options
+    # Select 1-Wire
+    # Select Yes
+    sudo reboot
+    # Verify:
+    lsmod | grep -i w1_
+
+Once devices are attached:
+
+    pi@masher:~ $ cat /sys/bus/w1/devices/w1_bus_master1/w1_master_slave_count 
+    4
+    pi@masher:~ $ cat /sys/bus/w1/devices/w1_bus_master1/w1_master_slaves
+    28-3c01d6079918
+    28-3c01d6075334
+    28-3c01d607fdfa
+    28-3c01d60706bb
+    pi@masher:~ $ cat /sys/bus/w1/devices/28-3c01d6079918/temperature 
+    20437
+    pi@masher:~ $ cat /sys/bus/w1/devices/28-3c01d6075334/temperature 
+    20375
+    pi@masher:~ $ cat /sys/bus/w1/devices/28-3c01d607fdfa/temperature 
+    23687
+    pi@masher:~ $ cat /sys/bus/w1/devices/28-3c01d60706bb/temperature 
+    20750
+    pi@masher:~ $ 
+
+
+
+
+
