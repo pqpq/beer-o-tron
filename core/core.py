@@ -17,11 +17,13 @@ import select
 import threading
 from gpiozero import Button
 from time import sleep
+from pathlib import Path
+from datetime import datetime
 
 # Utility functions
 
-def read_file(fileName):
-    with open(fileName) as f:
+def read_file(filename):
+    with open(filename) as f:
         return f.readlines()
 
 def send_message(message):
@@ -71,12 +73,13 @@ class TemperatureReader:
 
     class Sensor:
         """ Encapsulate one temperature sensor."""
-        def __init__(self, path):
-            self.sensor = path
+        def __init__(self, name, path):
+            self.name = name
+            self.path = path
             self.value = 0.0
 
         def read(self, lock):
-            with open(self.sensor + "/temperature") as f:
+            with open(self.path + "/temperature") as f:
                 value = f.read()
                 lock.acquire()
                 self.value = float(value) / 1000
@@ -87,10 +90,10 @@ class TemperatureReader:
         self.lock = threading.Lock()
 
     def start(self):
-        self.thread = threading.Thread(target=TemperatureReader.thread_function, daemon=True, args=(self,))
+        self.thread = threading.Thread(target=TemperatureReader.__thread_function, daemon=True, args=(self,))
         self.thread.start()
 
-    def get_temperatures(self):
+    def temperatures(self):
         values = []
         self.lock.acquire()
         for i in self.sensors:
@@ -98,26 +101,82 @@ class TemperatureReader:
         self.lock.release()
         return values
 
-    def discover_sensors(self):
+    def sensor_names(self):
+        values = []
+        self.lock.acquire()
+        for i in self.sensors:
+            values.append(i.name)
+        self.lock.release()
+        return values
+
+    def __discover_sensors(self):
         self.sensors.clear()
         sensors = read_file(TemperatureReader.one_wire_device_path + "w1_bus_master1/w1_master_slaves")
         self.lock.acquire()
         for i in sensors:
-            self.sensors.append(TemperatureReader.Sensor(TemperatureReader.one_wire_device_path + i.rstrip()))
+            name = i.rstrip()
+            self.sensors.append(TemperatureReader.Sensor(name, TemperatureReader.one_wire_device_path + name))
         self.lock.release()
 
-    def read_sensors(self):
+    def __read_sensors(self):
         for i in self.sensors:
             i.read(self.lock)
 
-    def thread_function(self):
-        self.discover_sensors()
+    def __thread_function(self):
+        self.__discover_sensors()
         while True:
-            self.read_sensors()
+            self.__read_sensors()
             sleep(1)
 
+class Logger:
+
+    # TODO - mini class for logfile: path, file, log()
+
+    def __init__(self, path):
+        self.path = path
+        if self.path.endswith('/'):
+            self.path = self.path[:-1]
+        Path(self.path).mkdir(parents=True, exist_ok=True)
+        self.main_log_file = None
+        self.main_log_file = self.__create("core")
+        self.temperature_log_file = None
+        self.log("Mash-o-matiC")
+
+    def __del__(self):
+        self.main_log_file.flush()
+        self.main_log_file.close()
+
+    def __log(self, file, text):
+        if file is not None:
+            file.write(text + "\n")
+            file.flush()
+
+    def log(self, text):
+        self.__log(self.main_log_file, text)
+
+    def start_temperature_log(self, sensors):
+        if self.temperature_log_file is not None:
+            self.temperature_log_file.close()
+        self.temperature_log_file = self.__create("temperature")
+        self.__log(self.temperature_log_file, ','.join(sensors))
+
+    def log_temperatures(self, values):
+        if self.temperature_log_file is None:
+            self.log("log_temperatures() called before start_temperature_log()!")
+            self.start_temperature_log("(no sensors)")
+        values_string = ','.join(map(str, values))
+        self.__log(self.temperature_log_file, values_string)
+
+    def __create(self, filename):
+        now = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+        path = self.path + "/" + filename + "_" + now + ".log"
+        self.log("Creating " + path)
+        return open(path, "a+")
 
 def main():
+
+    installation_path = "/opt/mash-o-matic/"
+
     heartbeat_count = 0
 
     def decode_message(message):
@@ -126,11 +185,14 @@ def main():
             send_message(message)
             nonlocal heartbeat_count
             if heartbeat_count == 0:
-                send_message("image /opt/mash-o-matic/splash.png")
+                send_message("image " + installation_path + "splash.png")
             heartbeat_count = heartbeat_count + 1
 
     temperature_reader = TemperatureReader()
     temperature_reader.start()
+    
+    logger = Logger(installation_path + "logs/")
+    logger.start_temperature_log(temperature_reader.sensor_names())
 
     count = 0
     seconds = 0
@@ -151,12 +213,14 @@ def main():
             seconds = seconds + 1
             send_message("time " + str(seconds))
 
-            average_temperature = 0.0
-            temperatures = temperature_reader.get_temperatures()
-            for i in temperatures:
-                average_temperature = average_temperature + i
-            average_temperature = average_temperature / len(temperatures)
-            send_message("temp " + str(average_temperature))
+            temperatures = temperature_reader.temperatures()
+            if len(temperatures) > 0:
+                average_temperature = 0.0
+                logger.log_temperatures(temperatures)
+                for i in temperatures:
+                    average_temperature = average_temperature + i
+                average_temperature = average_temperature / len(temperatures)
+                send_message("temp " + str(average_temperature))
 
 if __name__ == "__main__":
     sys.stderr.write("Mash-o-matiC core\n")
