@@ -130,48 +130,42 @@ class TemperatureReader:
 
 class Logger:
 
-    # TODO - mini class for logfile: path, file, log()
+    class LogFile:
+        def __init__(self, path, logfile):
+            now = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+            self.path = path + "_" + now + ".log"
+            if logfile is not None:
+                logfile.log("Creating " + self.path)
+            self.file = open(self.path, "a+")
+
+        def log(self, text):
+            self.file.write(text + "\n")
+            self.file.flush()
 
     def __init__(self, path):
         self.path = path
-        if self.path.endswith('/'):
-            self.path = self.path[:-1]
+        #if self.path.endswith('/'):
+        #    self.path = self.path[:-1]
         Path(self.path).mkdir(parents=True, exist_ok=True)
-        self.main_log_file = None
-        self.main_log_file = self.__create("core")
+        self.main_log_file = Logger.LogFile(self.path + "core", None)
         self.temperature_log_file = None
-        self.log("Mash-o-matiC")
-
-    def __del__(self):
-        self.main_log_file.flush()
-        self.main_log_file.close()
-
-    def __log(self, file, text):
-        if file is not None:
-            file.write(text + "\n")
-            file.flush()
+        self.main_log_file.log("Mash-o-matiC")
+        sys.stderr.write("Logging to " + self.main_log_file.path + "\n")
 
     def log(self, text):
-        self.__log(self.main_log_file, text)
+        self.main_log_file.log(text)
 
     def start_temperature_log(self, sensors):
-        if self.temperature_log_file is not None:
-            self.temperature_log_file.close()
-        self.temperature_log_file = self.__create("temperature")
-        self.__log(self.temperature_log_file, ','.join(sensors))
+        self.temperature_log_file = Logger.LogFile(self.path + "temperature", self.main_log_file)
+        self.temperature_log_file.log(','.join(sensors))
 
     def log_temperatures(self, values):
         if self.temperature_log_file is None:
             self.log("log_temperatures() called before start_temperature_log()!")
             self.start_temperature_log("(no sensors)")
         values_string = ','.join(map(str, values))
-        self.__log(self.temperature_log_file, values_string)
+        self.temperature_log_file.log(values_string)
 
-    def __create(self, filename):
-        now = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-        path = self.path + "/" + filename + "_" + now + ".log"
-        self.log("Creating " + path)
-        return open(path, "a+")
 
 def main():
 
