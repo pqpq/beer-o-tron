@@ -10,6 +10,14 @@ or temperature profile the user has chosen.
 This code is what needs to run in order that the thing actually works.
 The C++ GUI is just the human interface to this.
 
+Thoughts/Todos:
+class Run()
+    init records time, creates run folder, with log and graph. Copy profile file?
+    poll updates this and sends 'time' message
+    descructor sends 'time 0'?
+
+Have a names file for temperature sensors, so we can give them nicknames?
+
 """
 
 import sys
@@ -65,7 +73,7 @@ class TemperatureReader:
     to take about a second as well. I experimented with select(), but
     even when that said all 4 files were ready to read, it still took
     one second per file to complete the read().
-    This lead to the requirement for it to be done in a background worker
+    This led to the requirement for it to be done in a background worker
     thread.
     """
 
@@ -129,7 +137,7 @@ class TemperatureReader:
             sleep(1)
 
 class Logger:
-
+    """ Encapsulate general and temperature logging. """
     class LogFile:
         def __init__(self, path, logfile):
             now = datetime.now().strftime("%Y-%m-%d_%H%M%S")
@@ -139,13 +147,12 @@ class Logger:
             self.file = open(self.path, "a+")
 
         def log(self, text):
-            self.file.write(text + "\n")
+            time = datetime.now().strftime("%H:%M:%S")
+            self.file.write(time + ", " + text + "\n")
             self.file.flush()
 
     def __init__(self, path):
         self.path = path
-        #if self.path.endswith('/'):
-        #    self.path = self.path[:-1]
         Path(self.path).mkdir(parents=True, exist_ok=True)
         self.main_log_file = Logger.LogFile(self.path + "core", None)
         self.temperature_log_file = None
@@ -157,13 +164,13 @@ class Logger:
 
     def start_temperature_log(self, sensors):
         self.temperature_log_file = Logger.LogFile(self.path + "temperature", self.main_log_file)
-        self.temperature_log_file.log(','.join(sensors))
+        self.temperature_log_file.log(", ".join(sensors))
 
     def log_temperatures(self, values):
         if self.temperature_log_file is None:
             self.log("log_temperatures() called before start_temperature_log()!")
             self.start_temperature_log("(no sensors)")
-        values_string = ','.join(map(str, values))
+        values_string = ", ".join(map(str, values))
         self.temperature_log_file.log(values_string)
 
 
@@ -171,26 +178,46 @@ def main():
 
     installation_path = "/opt/mash-o-matic/"
 
-    heartbeat_count = 0
-
-    def decode_message(message):
-        # Echo heartbeats so GUI is happy
-        if (message.startswith("heartbeat")):
-            send_message(message)
-            nonlocal heartbeat_count
-            if heartbeat_count == 0:
-                send_message("image " + installation_path + "splash.png")
-            heartbeat_count = heartbeat_count + 1
-
     temperature_reader = TemperatureReader()
     temperature_reader.start()
+    # Give the thread time to start and discover the senors before we start temperature loggin
+    sleep(0.01)
     
     logger = Logger(installation_path + "logs/")
     logger.start_temperature_log(temperature_reader.sensor_names())
 
-    count = 0
+    heard_from_gui = False
+
+    def decode_message(message):
+        if (message.startswith("heartbeat")):
+            # Echo heartbeats so GUI is happy
+            send_message(message)
+            nonlocal heard_from_gui
+            if not heard_from_gui:
+                send_message("image " + installation_path + "splash.png")
+                heard_from_gui = True
+
     seconds = 0
 
+    def do_one_second_actions():
+        nonlocal seconds
+        send_message("time " + str(seconds))
+            
+    def do_ten_second_actions():
+        nonlocal temperature_reader, logger
+        temperatures = temperature_reader.temperatures()
+        if len(temperatures) > 0:
+            average_temperature = 0.0
+            logger.log_temperatures(temperatures)
+            for i in temperatures:
+                average_temperature = average_temperature + i
+            average_temperature = average_temperature / len(temperatures)
+            send_message("temp " + str(average_temperature))
+
+    poll_period = 0.05
+    polls_in_one_second = 1.0 / poll_period
+    polls = 0
+    
     while True:
         # Non-blocking check for whether there's anything to read on stdin
         # select() only signals stdin when ENTER is pressed, so when
@@ -198,23 +225,16 @@ def main():
         if select.select([sys.stdin], [], [], 0)[0] == [sys.stdin]:
             decode_message(sys.stdin.readline())
 
-        sleep(0.05)
+        sleep(poll_period)
 
-        count = count + 1
-        if count == 20:
-            count = 0
-
+        polls = polls + 1
+        if polls >= polls_in_one_second:
+            polls = 0
             seconds = seconds + 1
-            send_message("time " + str(seconds))
+            do_one_second_actions()
+            if seconds % 10 == 0:
+                do_ten_second_actions()
 
-            temperatures = temperature_reader.temperatures()
-            if len(temperatures) > 0:
-                average_temperature = 0.0
-                logger.log_temperatures(temperatures)
-                for i in temperatures:
-                    average_temperature = average_temperature + i
-                average_temperature = average_temperature / len(temperatures)
-                send_message("temp " + str(average_temperature))
 
 if __name__ == "__main__":
     sys.stderr.write("Mash-o-matiC core\n")
