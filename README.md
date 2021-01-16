@@ -104,8 +104,8 @@ Now that the Python core is in the mix we can test with the real things:
 
     # gui has been scp'd from the host machine after cross compilation
     cd ~
-    mkfifo pipe
-    python3 beer-o-tron/core/core.py < pipe | ./gui > pipe
+    mkfifo /tmp/pipe
+    python3 beer-o-tron/core/core.py < /tmp/pipe | ./gui > /tmp/pipe
 
 
 ### Getting temperature sensors working
