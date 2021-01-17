@@ -44,6 +44,8 @@ Window {
 
     property ListModel presets: ListModel{}
 
+    onClosing: messages.send("bye")
+
     Messages {
         id: messages
         onReceived: decode(message)
