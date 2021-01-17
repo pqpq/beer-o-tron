@@ -43,25 +43,29 @@ def send_message(message):
 def datetime_now_string():
     return datetime.now().strftime("%Y-%m-%d_%H%M%S")
 
+def json_from_file(filepath, logger):
+    try:
+        file = open(filepath, "r")
+        return json.load(file)
+    except:
+        logger.error("Problem reading " + filepath)
+        logger.error("details: " + str(sys.exc_info()[1]))
+    return None
+
 def send_profiles(path, logger):
     folder = path + "profiles/"
     with scandir(folder) as it:
         for entry in it:
             if entry.is_file():
                 filepath = folder + entry.name
-                try:
-                    file = open(filepath, "r")
-                    profile = json.load(file)
-                except:
-                    logger.error("Problem reading " + filepath)
-                    logger.error("details: " + str(sys.exc_info()[1]))
-                else:
+                profile = json_from_file(filepath, logger)
+                if profile is not None:
                     try:
-                        send_message("preset \"" + profile["name"] + "\" \"" + profile["description"] + "\"")
+                        send_message("preset \"" + filepath + "\" \"" + profile["name"] + "\" \"" + profile["description"] + "\"")
                     except AttributeError:
                         logger.error("Missing attributes in " + filepath)
                         logger.error(str(profile))
-            
+
 # Button GPIO
 
 def send_down(button):
@@ -210,22 +214,24 @@ class Run:
         self.seconds = 0
         self.path = path
         #self.log = ??? # create our own LogFile, or ask Logger?
+        #start logging temperature in self.path
+        #create graph and send to gui?
         Path(self.path).mkdir(parents=True, exist_ok=True)
 
     def __del__(self):
         # stop pump & heater?
         send_message("time 0")
-        
+
     def set(self, temperature):
-        # log temperature
+        # log change of temperature
         # if we're already running, just change it
-        sys.stderr.write("Run.set() " + str(temperature))
+        sys.stderr.write("Run.set() " + str(temperature) + "\n")
 
     def profile(self, profile):
         # check we haven't already got a profile - should create a new run for a new profile
         # log profile details
-        sys.stderr.write("Run.profile() " + profile)
-    
+        sys.stderr.write("Run.profile() " + profile + "\n")
+
     def tick(self):
         self.seconds = self.seconds + 1
         send_message("time " + str(self.seconds))
@@ -234,7 +240,7 @@ class Run:
         # determine whether we are hot, cold or ok - send changes to gui
         # turn heater on/off
         # update graph and send image to gui
-        sys.stderr.write("Run.temperature() " + str(value))
+        sys.stderr.write("Run.temperature() " + str(value) + "\n")
 
 
 def main():
@@ -261,13 +267,13 @@ def main():
 
     def send_splash():
         send_message("image " + installation_path + "splash.png")
-        
+
     def decode_message(message):
         nonlocal run, logger, keep_looping
         parts = message.split()
         command = parts[0]
         has_parameters = len(parts) > 1
-        
+
         if command == "bye":
             logger.log("GUI said 'bye'")
             keep_looping = False
@@ -292,9 +298,10 @@ def main():
         if command == "run" and has_parameters:
             splitbyquotes = message.split('"')
             if len(splitbyquotes) > 1:
-                profilename = splitbyquotes[1].replace(" ", "-")
-                run = Run(installation_path + "runs/run_" + profilename + "_" + datetime_now_string())
-                run.profile(profilename)
+                profile = splitbyquotes[1].replace(" ", "-")
+                stem = Path(profile).stem
+                run = Run(installation_path + "runs/run_" + stem + "_" + datetime_now_string())
+                run.profile(profile)
         if command == "list":
             send_profiles(installation_path, logger)
 
