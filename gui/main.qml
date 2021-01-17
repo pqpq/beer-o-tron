@@ -33,6 +33,7 @@ Window {
     property int listHeight: window.height / 2
     property int textSize: unitOfSize
     property int descriptionTextSize: textSize * 2/3
+    property int descriptionMaxWidth: window.width * 3/4
 
     property int temperatureTextSize: unitOfSize * 3/2
     property int temperatureBackgroundWidth: window.width / 2
@@ -145,7 +146,7 @@ Window {
 
             // Normally we toggle between solidHeart and hollowHeart, so the user
             // sees a beating heart, which means comms are live (i.e. things are good).
-            // If we loose comms, we switch to problem) and the user sees the
+            // If we loose comms, we switch to problem and the user sees the
             // flashing problem icon.
             readonly property int solidHeart: 0
             readonly property int  hollowHeart: 1
@@ -329,8 +330,8 @@ Window {
 
             // Keep the selected item in the middle of the list
             highlightRangeMode: ListView.StrictlyEnforceRange
-            preferredHighlightBegin: height/2 - textSize / 2
-            preferredHighlightEnd: height/2 + textSize / 2
+            preferredHighlightBegin: height / 2 - textSize / 2
+            preferredHighlightEnd: preferredHighlightBegin + textSize
 
             model: presets
 
@@ -358,22 +359,23 @@ Window {
                     currentIndex--
                 ensureSelectionIsVisible()
             }
+
             function canSelect() {
                 return model.count > 0
             }
-
             function select() {
-                let obj = model.get(currentIndex)
+                const obj = model.get(currentIndex)
                 presetDetails.name = obj.name
                 presetDetails.description = obj.description
             }
+
             function ensureSelectionIsVisible() {
                 positionViewAtIndex(currentIndex, ListView.Contain)
             }
 
             function run() {
-                let obj = model.get(currentIndex)
-                messages.send("run \"" + obj.name + '"')
+                const obj = model.get(currentIndex)
+                messages.send("run \"" + obj.id + '"')
             }
 
             delegate: Text {
@@ -411,7 +413,7 @@ Window {
                 elide: Text.ElideRight
                 Layout.margins: parent.textMargins
                 Layout.bottomMargin: 0
-                Layout.maximumWidth: window.width * 0.75
+                Layout.maximumWidth: descriptionMaxWidth
             }
             Text {
                 id: description
@@ -419,7 +421,7 @@ Window {
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                 elide: Text.ElideRight
                 Layout.margins: parent.textMargins
-                Layout.maximumWidth: window.width * 0.75
+                Layout.maximumWidth: descriptionMaxWidth
                 Layout.maximumHeight: descriptionTextSize * 5
             }
         }
@@ -688,21 +690,29 @@ Window {
     }
 
     function parsePreset(preset) {
-        //console.log("parsePreset(" + preset + ")")
-
+        let id = ""
         let name = ""
         let description = ""
 
-        const parts = preset.split('"')
-        if (parts.length > 1) {
-            name = parts[1]
+        const partsAndSpaces = preset.split('"')
+        let parts = []
+        for (let i in partsAndSpaces) {
+            const partOrSpace = partsAndSpaces[i].trim()
+            if (partOrSpace !== "") {
+                parts.push(partOrSpace)
+            }
+        }
+
+        if (parts.length > 2) {
+            id = parts[1]
+            name = parts[2]
         }
         if (parts.length > 3) {
             description = parts[3]
         }
 
-        if (!!name) {
-            presets.append({"name":name, "description":description})
+        if (!!id && !!name) {
+            presets.append({"id":id, "name":name, "description":description})
         }
     }
 

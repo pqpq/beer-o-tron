@@ -149,16 +149,17 @@ ApplicationWindow {
                 event.accepted = true
                 break
             case Qt.Key_L:
-                messages.send("preset \"one\" \"blah blah <br>blah. This is really long. Will it automatically split over many lines? I wonder, yes I wonder. Oooh I wonder?\"")
-                messages.send("preset \"two\" \"blah blah blah\"")
-                messages.send("preset \"three 3\"")
-                messages.send("preset \"no closing quote")
-                messages.send("preset \"fore\"\"no closing quote and no space separating")
-                messages.send("preset noquotes")
-                messages.send("preset \"my mash\" \"55' rest\"")
-                messages.send("preset \"blah\" \"whatever\"")
-                messages.send("preset \"quite a long name that should elide\" \"some sort of description\"")
-                messages.send("preset \"mash.txt\" \"0934098092357\"")
+                messages.send("preset \"one\" \"one\" \"blah blah <br>blah. This is really long. Will it automatically split over many lines? I wonder, yes I wonder. Oooh I wonder?\"")
+                messages.send("preset \"2\" \"two\" \"blah blah blah\"")
+                messages.send("preset \"3\" \"three 3\"")
+                messages.send("preset \"x\" \"no closing quote")
+                messages.send("preset \"no name or desription\"")
+                messages.send("preset \"four.json\" \"fore\"\"no closing quote and no space separating")
+                messages.send("preset blah.txt noquotes")
+                messages.send("preset \"mash.json\" \"my mash\" \"55' rest\"")
+                messages.send("preset \"blah\" \"blah\" \"whatever\"")
+                messages.send("preset \"banana\" \"quite a long name that should elide\" \"some sort of description\"")
+                messages.send("preset \"mash.txt\" \"mash.txt\" \"0934098092357\"")
                 event.accepted = true
                 break
             case Qt.Key_N:
