@@ -23,12 +23,13 @@ Have a names file for temperature sensors, so we can give them nicknames?
 import sys
 import select
 import threading
+import json
 from gpiozero import Button
 from time import sleep
 from pathlib import Path
 from datetime import datetime
 from os import scandir
-import json
+from shutil import copyfile
 
 # Utility functions
 
@@ -164,83 +165,88 @@ class TemperatureReader:
             sleep(1)
 
 class Logger:
-    """ Encapsulate general and temperature logging. """
+    """ Encapsulate general logging. """
     class LogFile:
-        def __init__(self, path, logfile):
+        def __init__(self, path):
             self.path = path + "_" + datetime_now_string() + ".log"
-            if logfile is not None:
-                logfile.log("Creating " + self.path)
             self.file = open(self.path, "a+")
 
         def log(self, text):
             time = datetime.now().strftime("%H:%M:%S")
-            self.file.write(time + ", " + text + "\n")
+            if not text.endswith("\n"):
+                text = text + "\n"
+            self.file.write(time + ", " + text)
             self.file.flush()
 
     def __init__(self, path):
         self.path = path
-        Path(self.path).mkdir(parents=True, exist_ok=True)
-        self.main_log_file = Logger.LogFile(self.path + "core", None)
-        self.temperature_log_file = None
-        self.main_log_file.log("Mash-o-matiC")
-        sys.stderr.write("Logging to " + self.main_log_file.path + "\n")
+        parent = Path(path).parent
+        sys.stderr.write("path " + path + "\n")
+        sys.stderr.write("parent " + str(parent) + "\n")
+        Path(parent).mkdir(parents=True, exist_ok=True)
+        self.log_file = Logger.LogFile(self.path)
 
     def log(self, text):
-        self.main_log_file.log(text)
+        self.log_file.log(text)
 
     def error(self, text):
         self.log(text)
         sys.stderr.write(text + "\n")
 
-    def start_temperature_log(self, sensors):
-        self.temperature_log_file = Logger.LogFile(self.path + "temperature", self.main_log_file)
-        self.temperature_log_file.log(", ".join(sensors))
 
-    def log_temperatures(self, values):
-        if self.temperature_log_file is None:
-            self.log("log_temperatures() called before start_temperature_log()!")
-            self.start_temperature_log("(no sensors)")
-        values_string = ", ".join(map(str, values))
-        self.temperature_log_file.log(values_string)
-
-# Should we have a new temperature log per run? In the run folder?
 # Always run the pump? It will help to even the temperature top to bottom
 # Maybe start off not alway running, and have a good look at the temperature logs,
 # so we can see whether there is a real difference.
 class Run:
     """ Details about one run. """
-    def __init__(self, path):
+    def __init__(self, path, temperature_sensor_names):
         """ path is the directory for the run, not a file name."""
         self.seconds = 0
         self.path = path
-        #self.log = ??? # create our own LogFile, or ask Logger?
-        #start logging temperature in self.path
-        #create graph and send to gui?
+        if not self.path.endswith("/"):
+            self.path = self.path + "/"
         Path(self.path).mkdir(parents=True, exist_ok=True)
+        self.temperature_log = Logger(self.path + "temperature")
+        self.temperature_log.log(", ".join(temperature_sensor_names) + ", average")
+        #create graph and send to gui?
 
     def __del__(self):
         # stop pump & heater?
         send_message("time 0")
 
+    # derived class? compose an implementer?
+    # If we're running a profile, what should we do?
     def set(self, temperature):
         # log change of temperature
         # if we're already running, just change it
         sys.stderr.write("Run.set() " + str(temperature) + "\n")
 
+    # derived class? compose an implementer?
+    # If we're running a set temperature, what should we do?
     def profile(self, profile):
         # check we haven't already got a profile - should create a new run for a new profile
         # log profile details
         sys.stderr.write("Run.profile() " + profile + "\n")
+        copyfile(profile, self.path + Path(profile).name)
 
     def tick(self):
         self.seconds = self.seconds + 1
         send_message("time " + str(self.seconds))
 
-    def temperature(self, value):
+    def temperature(self, temperatures):
+        if len(temperatures) > 0:
+            average = 0.0
+            for t in temperatures:
+                average = average + t
+            average = average / len(temperatures)
+
+            values_string = ", ".join(map(str, temperatures))
+            self.temperature_log.log(values_string + ", " + str(average))
+            send_message("temp " + str(average))
+
         # determine whether we are hot, cold or ok - send changes to gui
         # turn heater on/off
         # update graph and send image to gui
-        sys.stderr.write("Run.temperature() " + str(value) + "\n")
 
 
 def main():
@@ -249,14 +255,15 @@ def main():
     # then we wouldn't need all these "nonlocal" in the functions.
 
     installation_path = "/opt/mash-o-matic/"
+    log_path = installation_path + "logs/"
+    run_path = installation_path + "runs/"
 
     temperature_reader = TemperatureReader()
     temperature_reader.start()
-    # Give the thread time to start and discover the senors before we start temperature logging
-    sleep(0.01)
 
-    logger = Logger(installation_path + "logs/")
-    logger.start_temperature_log(temperature_reader.sensor_names())
+    logger = Logger(log_path + "core")
+    logger.log("Mash-o-matiC")
+    sys.stderr.write("Logging to " + logger.log_file.path + "\n")
 
     heard_from_gui = False
 
@@ -269,13 +276,13 @@ def main():
         send_message("image " + installation_path + "splash.png")
 
     def decode_message(message):
-        nonlocal run, logger, keep_looping
+        nonlocal run, logger, keep_looping, temperature_reader
         parts = message.split()
         command = parts[0]
         has_parameters = len(parts) > 1
 
         if command == "bye":
-            logger.log("GUI said 'bye'")
+            logger.log(message)
             keep_looping = False
         if command == "heartbeat":
             # Echo heartbeats so GUI is happy
@@ -285,22 +292,21 @@ def main():
                 send_splash()
                 heard_from_gui = True
         if command == "idle":
+            logger.log(message)
             run = None
             send_splash()
         if command == "set" and has_parameters:
+            logger.log(message)
             if run is None:
-                run = Run(installation_path + "runs/set_" + datetime_now_string())
-            run.set(parts[1])
-        if command == "set" and has_parameters:
-            if run is None:
-                run = Run(installation_path + "runs/set_" + datetime_now_string())
+                run = Run(run_path + "set_" + datetime_now_string(), temperature_reader.sensor_names())
             run.set(float(parts[1]))
         if command == "run" and has_parameters:
+            logger.log(message)
             splitbyquotes = message.split('"')
             if len(splitbyquotes) > 1:
                 profile = splitbyquotes[1].replace(" ", "-")
                 stem = Path(profile).stem
-                run = Run(installation_path + "runs/run_" + stem + "_" + datetime_now_string())
+                run = Run(run_path + "run_" + stem + "_" + datetime_now_string(), temperature_reader.sensor_names())
                 run.profile(profile)
         if command == "list":
             send_profiles(installation_path, logger)
@@ -313,17 +319,10 @@ def main():
             run.tick()
 
     def do_ten_second_actions():
-        nonlocal temperature_reader, logger, run
-        temperatures = temperature_reader.temperatures()
-        if len(temperatures) > 0:
-            average_temperature = 0.0
-            logger.log_temperatures(temperatures)
-            for i in temperatures:
-                average_temperature = average_temperature + i
-            average_temperature = average_temperature / len(temperatures)
-            send_message("temp " + str(average_temperature))
-            if run is not None:
-                run.temperature(average_temperature)
+        nonlocal temperature_reader, run
+        if run is not None:
+            temperatures = temperature_reader.temperatures()
+            run.temperature(temperatures)
 
     poll_period = 0.05
     polls_in_one_second = 1.0 / poll_period
