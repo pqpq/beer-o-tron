@@ -568,6 +568,8 @@ Window {
 
         function allStop() {
             messages.send("allstop")
+            // The transitions from run states need this as well.
+            idle()
         }
 
         function idle() {
