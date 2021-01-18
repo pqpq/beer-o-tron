@@ -1,5 +1,14 @@
 #! usr/bin/python3
 
+#######
+# TODO
+
+# Null pattern for Run() because now in idle state there's nothing to update the temperature on the GUI!
+# Add needs_new_run() method or similar, so each time we get a command we can tell what to do.
+# will allow us to switch between set and profile Run()s.
+
+# Log pump / heater on/off in its own file so we can graph it.
+
 """
 Mash-o-matiC Core.
 
@@ -166,28 +175,18 @@ class TemperatureReader:
 
 class Logger:
     """ Encapsulate general logging. """
-    class LogFile:
-        def __init__(self, path):
-            self.path = path + "_" + datetime_now_string() + ".log"
-            self.file = open(self.path, "a+")
-
-        def log(self, text):
-            time = datetime.now().strftime("%H:%M:%S")
-            if not text.endswith("\n"):
-                text = text + "\n"
-            self.file.write(time + ", " + text)
-            self.file.flush()
-
     def __init__(self, path):
-        self.path = path
         parent = Path(path).parent
-        sys.stderr.write("path " + path + "\n")
-        sys.stderr.write("parent " + str(parent) + "\n")
         Path(parent).mkdir(parents=True, exist_ok=True)
-        self.log_file = Logger.LogFile(self.path)
+        self.path = path + "_" + datetime_now_string() + ".log"
+        self.file = open(self.path, "a+")
 
     def log(self, text):
-        self.log_file.log(text)
+        time = datetime.now().strftime("%H:%M:%S")
+        if not text.endswith("\n"):
+            text = text + "\n"
+        self.file.write(time + ", " + text)
+        self.file.flush()
 
     def error(self, text):
         self.log(text)
@@ -263,7 +262,7 @@ def main():
 
     logger = Logger(log_path + "core")
     logger.log("Mash-o-matiC")
-    sys.stderr.write("Logging to " + logger.log_file.path + "\n")
+    sys.stderr.write("Logging to " + logger.path + "\n")
 
     heard_from_gui = False
 
