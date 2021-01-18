@@ -3,11 +3,10 @@
 #######
 # TODO
 
-# Null pattern for Run() because now in idle state there's nothing to update the temperature on the GUI!
-# Add needs_new_run() method or similar, so each time we get a command we can tell what to do.
-# will allow us to switch between set and profile Run()s.
 
 # Log pump / heater on/off in its own file so we can graph it.
+
+# Have a names file for temperature sensors, so we can give them nicknames?
 
 """
 Mash-o-matiC Core.
@@ -18,15 +17,6 @@ This is the 'core' code that manages the GPIO, and maintaining whatever temperat
 or temperature profile the user has chosen.
 This code is what needs to run in order that the thing actually works.
 The C++ GUI is just the human interface to this.
-
-Thoughts/Todos:
-class Run()
-    init records time, creates run folder, with log and graph. Copy profile file?
-    poll updates this and sends 'time' message
-    descructor sends 'time 0'?
-
-Have a names file for temperature sensors, so we can give them nicknames?
-
 """
 
 import sys
@@ -47,8 +37,11 @@ def read_file(filename):
         return f.readlines()
 
 def send_message(message):
-    sys.stdout.write(message+'\n')
-    sys.stdout.flush()
+    try:
+        sys.stdout.write(message+'\n')
+        sys.stdout.flush()
+    except BrokenPipeError:
+        pass
 
 def datetime_now_string():
     return datetime.now().strftime("%Y-%m-%d_%H%M%S")
@@ -194,7 +187,7 @@ class TemperatureReader:
             sleep(1)
 
 class Logger:
-    """ Encapsulate general logging. """
+    """ A simple file based logger. """
     def __init__(self, path):
         parent = Path(path).parent
         Path(parent).mkdir(parents=True, exist_ok=True)
@@ -229,9 +222,12 @@ def create_temperature_log(path, temperature_sensor_names):
 # update graph and send image to gui
 
 class Activity:
-    """ Details about one run. """
-    #def __init__(self):
-
+    """
+    Base class for the activity the program is carrying out.
+    There is always an instance of Activity, even when we're not doing anything.
+    This means the main loop can always pass relevant events to the Activity
+    without testing whether one exists or not.
+    """
     def __del__(self):
         # stop pump & heater?
         send_message("time 0")
@@ -242,7 +238,7 @@ class Activity:
     def set_temperatures(self, temperatures):
         pass
 
-    def send_temperature(self, temperatures):
+    def log_and_send_temperature(self, temperatures):
         if len(temperatures) > 0:
             ave = average(temperatures)
             log_values_as_csv(self.temperature_log, temperatures + [ave])
@@ -250,8 +246,9 @@ class Activity:
 
 
 class Idle(Activity):
-    """ An Activity where no temperature is being maintained,
-        but we still send the current value to the GUI.
+    """
+    An Activity where no temperature is being maintained, but we still send
+    the current value to the GUI.
     """
     def set_temperatures(self, temperatures):
         if len(temperatures) > 0:
@@ -265,34 +262,58 @@ class Idle(Activity):
 class Set(Activity):
     """ An Activity that maintains a fixed temperature. """
 
-    def __init__(self, temperature, path, temperature_sensor_names):
-        """ path is the directory for the run, not a file name."""
+    def __init__(self, logger, temperature, path, temperature_sensor_names):
+        """
+        logger: a Logger in case we need to report errors
+        temperature: the fixed temperature to maintain
+        path : the directory for storing logs etc, associated with the run
+        temperature_sensor_names: list of sensor names for the temperature log file
+        """
         self.seconds = 0
-        self.temperature = temperature
+        self.last_change = 0
         path = create_folder_for_path(path)
+        logger.log("Created " + path)
         self.temperature_log = create_temperature_log(path, temperature_sensor_names)
+        self.profile = {}
+        self.profile["name"] = "Fixed"
+        self.profile["description"] = "Automatically generated."
+        self.profile["steps"] = [{"start": temperature}]
+        self.profile_path = path + "profile.json"
+        self.__write_profile()
 
     def tick(self):
         self.seconds = self.seconds + 1
         send_message("time " + str(self.seconds))
 
     def change_set_point(self, temperature):
-        self.temperature = temperature
+        rest_minutes = int(round((self.seconds - self.last_change) / 60.0))
+        self.last_change = self.seconds
+        self.profile["steps"].append({"rest":rest_minutes})
+        self.profile["steps"].append({"jump":temperature})
+        self.__write_profile()
 
     def set_temperatures(self, temperatures):
-        self.send_temperature(temperatures)
+        self.log_and_send_temperature(temperatures)
+
+    def __write_profile(self):
+        with open(self.profile_path, "w+") as f:
+            json.dump(self.profile, f, indent=4)
 
 
-# check we haven't already got a profile - should create a new run for a new profile
-# log profile details
 class Profile(Activity):
     """ An Activity that runs a temperature profile. """
 
     def __init__(self, logger, profile, path, temperature_sensor_names):
-        """ path is the directory for the run, not a file name."""
+        """
+        logger: a Logger in case we need to report errors
+        profile: path to the file describing to profile
+        path : the directory for storing logs etc, associated with the run
+        temperature_sensor_names: list of sensor names for the temperature log file
+        """
         self.seconds = 0
         self.profile = json_from_file(profile, logger)
         path = create_folder_for_path(path)
+        logger.log("Created " + path)
         self.temperature_log = create_temperature_log(path, temperature_sensor_names)
         copyfile(profile, path + Path(profile).name)
 
@@ -301,7 +322,7 @@ class Profile(Activity):
         send_message("time " + str(self.seconds))
 
     def set_temperatures(self, temperatures):
-        self.send_temperature(temperatures)
+        self.log_and_send_temperature(temperatures)
 
 
 def main():
@@ -356,7 +377,7 @@ def main():
             if isinstance(activity, Set):
                 activity.change_set_point(temperature)
             else:
-                activity = Set(temperature, path, temperature_reader.sensor_names())
+                activity = Set(logger, temperature, path, temperature_reader.sensor_names())
         if command == "run" and has_parameters:
             logger.log(message)
             splitbyquotes = message.split('"')
