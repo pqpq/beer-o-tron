@@ -3,6 +3,14 @@
 #######
 # TODO
 
+# New class to graph a profile
+# Generate graph for Activity, store it in the run folder, and send to GUI periodically
+
+# Write the temperature maintainance logic.
+# - determine hot/cold/ok
+# - GPIO, obviously
+# - emit pump and heater status
+# - handle 'allstop'
 
 # Log pump / heater on/off in its own file so we can graph it.
 
@@ -88,6 +96,10 @@ def create_folder_for_path(path):
     Path(path).mkdir(parents=True, exist_ok=True)
     return path
 
+def fixed_profile(temperature):
+    profile = {"name": "Fixed", "description": "Automatically generated."}
+    profile["steps"] = [{"start": temperature}]
+    return profile
 
 # Button GPIO
 
@@ -256,11 +268,11 @@ class Idle(Activity):
             send_message("temp " + str(ave))
 
 
-# need to simulate a profile so we can generate a graph of desired temp v time
-# this needs to be able to change, if the user alters the temp mid run.
-# need a profile file concept of "step" so it doesn't try to ramp from A to B.
 class Set(Activity):
     """ An Activity that maintains a fixed temperature. """
+
+    # Add time to the current rest so the graph extends into the future a little.
+    rest_additional_minutes = 10
 
     def __init__(self, logger, temperature, path, temperature_sensor_names):
         """
@@ -274,22 +286,23 @@ class Set(Activity):
         path = create_folder_for_path(path)
         logger.log("Created " + path)
         self.temperature_log = create_temperature_log(path, temperature_sensor_names)
-        self.profile = {}
-        self.profile["name"] = "Fixed"
-        self.profile["description"] = "Automatically generated."
-        self.profile["steps"] = [{"start": temperature}]
+        self.profile = fixed_profile(temperature)
+        self.profile["steps"].append({"rest": Set.rest_additional_minutes})
         self.profile_path = path + "profile.json"
         self.__write_profile()
 
     def tick(self):
         self.seconds = self.seconds + 1
         send_message("time " + str(self.seconds))
+        if self.seconds % 60 is 0:
+            self.__update_profile_rest(additional_minutes = Set.rest_additional_minutes)
+            self.__write_profile()
 
     def change_set_point(self, temperature):
-        rest_minutes = int(round((self.seconds - self.last_change) / 60.0))
+        self.__update_profile_rest()
         self.last_change = self.seconds
-        self.profile["steps"].append({"rest":rest_minutes})
-        self.profile["steps"].append({"jump":temperature})
+        self.profile["steps"].append({"jump": temperature})
+        self.profile["steps"].append({"rest": Set.rest_additional_minutes})
         self.__write_profile()
 
     def set_temperatures(self, temperatures):
@@ -298,6 +311,13 @@ class Set(Activity):
     def __write_profile(self):
         with open(self.profile_path, "w+") as f:
             json.dump(self.profile, f, indent=4)
+
+    def __rest_minutes(self):
+        return int(round((self.seconds - self.last_change) / 60.0))
+
+    def __update_profile_rest(self, additional_minutes = 0):
+        last_step = self.profile["steps"][-1]
+        last_step["rest"] = self.__rest_minutes() + additional_minutes
 
 
 class Profile(Activity):
