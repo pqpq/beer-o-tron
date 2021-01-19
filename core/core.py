@@ -3,9 +3,6 @@
 #######
 # TODO
 
-# Confirming a Run() causes it to re-start
-# Changing Set() temperature can take up to 10s for change to show on the graph.
-
 # Split out profile generation, graph generation into a class?
 # we're starting to pass around a lot of paths.
 # Create it separately and inject into Activity?
@@ -370,6 +367,7 @@ class Set(Activity):
         self.profile["steps"].append({"jump": temperature})
         self.profile["steps"].append({"rest": Set.rest_additional_minutes})
         self.__write_profile()
+        self.send_updated_graph()
 
     def set_temperatures(self, temperatures):
         self.log_and_send_temperature(temperatures)
