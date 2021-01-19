@@ -113,28 +113,18 @@ def write_profile_plot(filepath, profile, start_time):
             keys = list(step)
             if len(keys) > 0:
                 if keys[0] == "start":
-                    f.write("start: ")
                     temperature = step["start"]
                 if keys[0] == "rest":
-                    f.write("rest: ")
                     run_time += timedelta(minutes = step["rest"])
                 if keys[0] == "ramp":
-                    f.write("ramp: ")
                     run_time += timedelta(minutes = step["ramp"])
                     temperature = step["to"]
                 if keys[0] == "mashout":
                     temperature = step["mashout"]
-                    f.write("mashout1: ")
                     time = run_time.strftime("%H:%M:%S, ")
                     f.write(time + str(temperature) + "\n")
-                    f.write("mashout2: ")
                     run_time += timedelta(minutes = 10)
                 if keys[0] == "jump":
-                    #f.write("jump1: ")
-                    #time = run_time.strftime("%H:%M:%S, ")
-                    #f.write(time + str(temperature) + "\n")
-                    #f.write("jump2: ")
-                    f.write("jump1: ")
                     temperature = step["jump"]
 
                 time = run_time.strftime("%H:%M:%S, ")
@@ -360,6 +350,7 @@ class Set(Activity):
         self.gnuplot_file = gnuplot_file
         self.start_time = datetime.now()
         self.__write_profile()
+        self.send_updated_graph()
 
     def tick(self):
         self.seconds = self.seconds + 1
@@ -412,6 +403,7 @@ class Profile(Activity):
         self.graph_path = path + "graph.png"
         self.gnuplot_file = gnuplot_file
         write_profile_plot(self.profile_data_path, self.profile, datetime.now())
+        self.send_updated_graph()
 
     def tick(self):
         self.seconds = self.seconds + 1
