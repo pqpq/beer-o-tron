@@ -58,10 +58,22 @@ Window {
         id: background
         anchors.fill: parent
         fillMode: Image.PreserveAspectFit
+        cache: false
 
         // Simpler than having per-state PropertyChanges logic for opacity
         opacity: menu.state.endsWith("run") || (menu.state === "top") ? 1 : 0.25
         Behavior on opacity { PropertyAnimation { duration: 200 }}
+
+        // Temperature descends over the top of the graph so we need a background
+        // to hide the graph. We have to stack this here so it gets affected
+        // by the 'shade' Rectangle.
+        Rectangle {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            width: temperature.width + statusFontSize
+            height: temperature.height
+            color: "white"
+        }
 
         // Part transparent rectangle overlaying the background image so we can
         // shade the graph depending on conditions. e.g. red if we're too hot,
@@ -206,7 +218,7 @@ Window {
         anchors.margins: buttonMargins
         height: button1.height
         // Simpler than having per-state PropertyChanges logic for opacity
-        opacity: menu.state.endsWith("run") ? 0.5 : 1
+        opacity: menu.state.endsWith("run") ? 0.25 : 1
         Behavior on opacity { PropertyAnimation { duration: 200 }}
 
         RoundButton {
