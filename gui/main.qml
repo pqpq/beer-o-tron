@@ -655,8 +655,7 @@ Window {
             const indexOfPayload = message.indexOf(" ")
             if (indexOfPayload > 0) {
                 const newBackgroundImageSource = "file:" + message.slice(indexOfPayload + 1)
-                // We have to use == rather than === or there is no match
-                if (background.source == newBackgroundImageSource) {
+                if (background.source == Qt.resolvedUrl(newBackgroundImageSource)) {
                     background.source = ""
                 }
                 background.source = newBackgroundImageSource
