@@ -1,30 +1,41 @@
 # Mash-o-matiC gnuplot script
 # https://github.com/pqpq/beer-o-tron
 
+# Command line parameters
+# gnuplot -c graph.plt parameters...
+# Parameter 1: output file name
+# Parameter 2: Temperature axis min value
+# Parameter 3: Temperature axis max value
+# Parameter 4: Temperature data file name
+# Parameter 5: Profile data file name
+
+if (ARGC < 5) exit
+
+OUTPUT=ARG1
+LOW=ARG2
+HI=ARG3
+DATA=ARG4
+PROFILE=ARG5
+
+
 # Fixed format & 'style' commands
 
 set terminal png size 320,240
-#set style data lines
+
 set key autotitle columnhead	# consume first row, since we 'unset key' later
 unset key
 set timefmt "%H:%M:%S"		# so it understands our time values
 set xdata time
-#set xlabel "Time"
-#set format x "%H:%M"
-#set ylabel "Temperature °C"
-#set title "Shed Temperature"
-set xtic auto                          # set xtics automatically
+set xtic auto                   # set xtics automatically
 set xtics format ""		# turn off labels
-#set ytic auto                          # set ytics automatically
 set ytic 20
-set ytics right offset 1,0
+set ytics right offset 1,0	# right justify, close to axis
 set grid
 
-# set tmargin 1.75 # this clears the temperature readout nicely
 set tmargin 1.25	# this just clears the status icons
-set bmargin 0.5
-set lmargin 2.5
-set rmargin 0.5
+set bmargin 0.5		# close to the edge
+set lmargin 2.5		# space for 2 digits of temperature values
+set rmargin 0.5		# close to the edge
 
 # Thick-ish dark green line
 set style line 1 \
@@ -35,16 +46,16 @@ set style line 2 \
     linecolor rgb '#800000' \
     linewidth 2
 
-# From this point onwards, details are likely to be per-run,
-# i.e. generated on the fly.
 
-set output "graph.png"
-set yrange [10:90]
+# Output governed by command line parameters:
+
+set output OUTPUT
+set yrange [LOW:HI]
 set datafile sep ','
-plot "temperature_2021-01-18_192828.log" using 1:6 with lines linestyle 1, \
-     "profile.txt" using 1:2 with lines linestyle 2, \
-     "temperature_2021-01-18_192828.log" using 1:2 with lines lw 1 lt 0 lc "#800000", \
-     "temperature_2021-01-18_192828.log" using 1:3 with lines lw 1 lt 0 lc "#808000", \
-     "temperature_2021-01-18_192828.log" using 1:4 with lines lw 1 lt 0 lc "#008080", \
-     "temperature_2021-01-18_192828.log" using 1:5 with lines lw 1 lt 0 lc "#800080"
+plot DATA using 1:6 with lines linestyle 1, \
+     PROFILE using 1:2 with lines linestyle 2, \
+     DATA using 1:2 with lines lw 1 lt 0 lc "#800000", \
+     DATA using 1:3 with lines lw 1 lt 0 lc "#808000", \
+     DATA using 1:4 with lines lw 1 lt 0 lc "#008080", \
+     DATA using 1:5 with lines lw 1 lt 0 lc "#800080"
 
