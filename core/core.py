@@ -401,6 +401,7 @@ class Run(Activity):
         """
         self.seconds = 0
         self.profile = json_from_file(profile, logger)
+        self.profile_name = profile
         path = create_folder_for_path(path)
         logger.log("Created " + path)
         self.temperature_log = create_temperature_log(path, temperature_sensor_names)
@@ -487,6 +488,8 @@ def main():
             splitbyquotes = message.split('"')
             if len(splitbyquotes) > 1:
                 profile = splitbyquotes[1].replace(" ", "-")
+                if isinstance(activity, Run) and activity.profile_name == profile:
+                    return
                 stem = Path(profile).stem
                 path = run_path + "run_" + stem + "_" + datetime_now_string()
                 activity = Run(logger, profile, path, temperature_reader.sensor_names(), gnuplot_file)
