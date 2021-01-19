@@ -3,6 +3,9 @@
 #######
 # TODO
 
+# Confirming a Run() causes it to re-start
+# Changing Set() temperature can take up to 10s for change to show on the graph.
+
 # Split out profile generation, graph generation into a class?
 # we're starting to pass around a lot of paths.
 # Create it separately and inject into Activity?
@@ -385,7 +388,7 @@ class Set(Activity):
         last_step["rest"] = self.__rest_minutes() + additional_minutes
 
 
-class Profile(Activity):
+class Run(Activity):
     """ An Activity that runs a temperature profile. """
 
     def __init__(self, logger, profile, path, temperature_sensor_names, gnuplot_file):
@@ -486,7 +489,7 @@ def main():
                 profile = splitbyquotes[1].replace(" ", "-")
                 stem = Path(profile).stem
                 path = run_path + "run_" + stem + "_" + datetime_now_string()
-                activity = Profile(logger, profile, path, temperature_reader.sensor_names(), gnuplot_file)
+                activity = Run(logger, profile, path, temperature_reader.sensor_names(), gnuplot_file)
                 temperatures = temperature_reader.temperatures()
                 activity.set_temperatures(temperatures)
         if command == "list":
