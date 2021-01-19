@@ -17,6 +17,11 @@
 
 # Have a names file for temperature sensors, so we can give them nicknames?
 
+# Always run the pump? It will help to even the temperature top to bottom
+# Maybe start off not alway running, and have a good look at the temperature logs,
+# so we can see whether there is a real difference.
+
+
 """
 Mash-o-matiC Core.
 
@@ -262,14 +267,6 @@ def create_temperature_log(path, temperature_sensor_names):
     return temperature_log
 
 
-# Always run the pump? It will help to even the temperature top to bottom
-# Maybe start off not alway running, and have a good look at the temperature logs,
-# so we can see whether there is a real difference.
-
-# determine whether we are hot, cold or ok - send changes to gui
-# turn heater on/off
-# update graph and send image to gui
-
 class Activity:
     """
     Base class for the activity the program is carrying out.
@@ -294,7 +291,12 @@ class Activity:
             send_message("temp " + str(ave))
 
     def update_graph(self):
-        """ gnuplot -c graph.plt graph.png 15 85 temperature_2021-01-18_192828.log profile.txt """
+        """
+        Use gnuplot to create or update the graph for this Activity.
+        The graph has a line for the profile, showing what temperature we should be at
+        and a line for the actual temperature. As we log the temperature we update
+        the graph so the user can see what's going on.
+        """
         if (Path(self.temperature_log.path).exists):
             command = ["gnuplot",
                        "-c",
@@ -336,6 +338,7 @@ class Set(Activity):
         temperature: the fixed temperature to maintain
         path : the directory for storing logs etc, associated with the run
         temperature_sensor_names: list of sensor names for the temperature log file
+        gnuplot_file: the file describing how to generate the graph
         """
         self.seconds = 0
         self.last_change = 0
@@ -350,7 +353,6 @@ class Set(Activity):
         self.gnuplot_file = gnuplot_file
         self.start_time = datetime.now()
         self.__write_profile()
-        self.send_updated_graph()
 
     def tick(self):
         self.seconds = self.seconds + 1
@@ -392,6 +394,7 @@ class Profile(Activity):
         profile: path to the file describing to profile
         path : the directory for storing logs etc, associated with the run
         temperature_sensor_names: list of sensor names for the temperature log file
+        gnuplot_file: the file describing how to generate the graph
         """
         self.seconds = 0
         self.profile = json_from_file(profile, logger)
@@ -403,7 +406,6 @@ class Profile(Activity):
         self.graph_path = path + "graph.png"
         self.gnuplot_file = gnuplot_file
         write_profile_plot(self.profile_data_path, self.profile, datetime.now())
-        self.send_updated_graph()
 
     def tick(self):
         self.seconds = self.seconds + 1
@@ -468,6 +470,8 @@ def main():
             else:
                 path = run_path + "set_" + datetime_now_string()
                 activity = Set(logger, temperature, path, temperature_reader.sensor_names(), gnuplot_file)
+                temperatures = temperature_reader.temperatures()
+                activity.set_temperatures(temperatures)
         if command == "run" and has_parameters:
             logger.log(message)
             splitbyquotes = message.split('"')
@@ -476,6 +480,8 @@ def main():
                 stem = Path(profile).stem
                 path = run_path + "run_" + stem + "_" + datetime_now_string()
                 activity = Profile(logger, profile, path, temperature_reader.sensor_names(), gnuplot_file)
+                temperatures = temperature_reader.temperatures()
+                activity.set_temperatures(temperatures)
         if command == "list":
             send_profiles(installation_path, logger)
 
