@@ -3,7 +3,6 @@
 #######
 # TODO
 
-# New class to graph a profile
 # Generate graph for Activity, store it in the run folder, and send to GUI periodically
 
 # Write the temperature maintainance logic.
@@ -34,7 +33,7 @@ import json
 from gpiozero import Button
 from time import sleep
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 from os import scandir
 from shutil import copyfile
 
@@ -101,6 +100,46 @@ def fixed_profile(temperature):
     profile["steps"] = [{"start": temperature}]
     return profile
 
+def write_profile_plot(filepath, profile, start_time):
+    """ Write a file containing gnuplot data for the profile."""
+    with open(filepath, "w+") as f:
+        run_time = start_time
+        f.write("Time, Temperature\n")
+        temperature = 0
+        for step in profile["steps"]:
+            keys = list(step)
+            if len(keys) > 0:
+                if keys[0] == "start":
+                    f.write("start: ")
+                    temperature = step["start"]
+                if keys[0] == "rest":
+                    f.write("rest: ")
+                    run_time += timedelta(minutes = step["rest"])
+                if keys[0] == "ramp":
+                    f.write("ramp: ")
+                    run_time += timedelta(minutes = step["ramp"])
+                    temperature = step["to"]
+                if keys[0] == "mashout":
+                    temperature = step["mashout"]
+                    f.write("mashout1: ")
+                    time = run_time.strftime("%H:%M:%S, ")
+                    f.write(time + str(temperature) + "\n")
+                    f.write("mashout2: ")
+                    run_time += timedelta(minutes = 10)
+                if keys[0] == "jump":
+                    #f.write("jump1: ")
+                    #time = run_time.strftime("%H:%M:%S, ")
+                    #f.write(time + str(temperature) + "\n")
+                    #f.write("jump2: ")
+                    f.write("jump1: ")
+                    temperature = step["jump"]
+
+                time = run_time.strftime("%H:%M:%S, ")
+                f.write(time + str(temperature) + "\n")
+            else:
+                sys.stderr.write("Can't make sense of " + str(step) + "\n")
+
+
 # Button GPIO
 
 def send_down(button):
@@ -150,10 +189,15 @@ class TemperatureReader:
 
         def read(self, lock):
             with open(self.path + "/temperature") as f:
-                value = f.read()
-                lock.acquire()
-                self.value = float(value) / 1000
-                lock.release()
+                raw_value = f.read()
+                try:
+                    value = float(raw_value)
+                except ValueError:
+                    sys.stderr.write("Couldn't parse '" + rawvalue + "'\n")
+                else:
+                    lock.acquire()
+                    self.value = value / 1000
+                    lock.release()
 
     def __init__(self):
         self.sensors = []
@@ -289,6 +333,8 @@ class Set(Activity):
         self.profile = fixed_profile(temperature)
         self.profile["steps"].append({"rest": Set.rest_additional_minutes})
         self.profile_path = path + "profile.json"
+        self.profile_data_path = path + "profile.dat"
+        self.start_time = datetime.now()
         self.__write_profile()
 
     def tick(self):
@@ -311,6 +357,7 @@ class Set(Activity):
     def __write_profile(self):
         with open(self.profile_path, "w+") as f:
             json.dump(self.profile, f, indent=4)
+        write_profile_plot(self.profile_path + ".txt", self.profile, self.start_time)
 
     def __rest_minutes(self):
         return int(round((self.seconds - self.last_change) / 60.0))
@@ -336,6 +383,8 @@ class Profile(Activity):
         logger.log("Created " + path)
         self.temperature_log = create_temperature_log(path, temperature_sensor_names)
         copyfile(profile, path + Path(profile).name)
+        self.profile_data_path = path + "profile.dat"
+        write_profile_plot(self.profile_data_path, self.profile, datetime.now())
 
     def tick(self):
         self.seconds = self.seconds + 1
@@ -392,12 +441,14 @@ def main():
             send_splash()
         if command == "set" and has_parameters:
             logger.log(message)
-            path = run_path + "set_" + datetime_now_string()
             temperature = float(parts[1])
             if isinstance(activity, Set):
                 activity.change_set_point(temperature)
             else:
+                path = run_path + "set_" + datetime_now_string()
                 activity = Set(logger, temperature, path, temperature_reader.sensor_names())
+                send_message("image /home/pi/beer-o-tron/data/graph.png")
+
         if command == "run" and has_parameters:
             logger.log(message)
             splitbyquotes = message.split('"')
@@ -406,6 +457,7 @@ def main():
                 stem = Path(profile).stem
                 path = run_path + "run_" + stem + "_" + datetime_now_string()
                 activity = Profile(logger, profile, path, temperature_reader.sensor_names())
+                send_message("image /home/pi/beer-o-tron/data/graph.png")
         if command == "list":
             send_profiles(installation_path, logger)
 
