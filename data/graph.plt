@@ -26,9 +26,9 @@ set key autotitle columnhead	# consume first row, since we 'unset key' later
 unset key
 set timefmt "%H:%M:%S"		# so it understands our time values
 set xdata time
-set xtic auto                   # set xtics automatically
+set xtic auto
 set xtics format ""		# turn off labels
-set ytic 20
+set ytic 10
 set ytics right offset 1,0	# right justify, close to axis
 set grid
 
