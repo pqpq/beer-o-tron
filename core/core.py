@@ -433,18 +433,25 @@ def main():
     logger.log("Mash-o-matiC")
     sys.stderr.write("Logging to " + logger.path + "\n")
 
-    heard_from_gui = False
-
     activity = Idle()
 
+    heard_from_gui = False
     keep_looping = True
+    seconds = 0
+    poll_period = 0.05
+    polls_in_one_second = 1.0 / poll_period
+    polls = 0
 
     def send_splash():
         send_message("image " + installation_path + "splash.png")
 
     def decode_message(message):
         nonlocal activity, logger, keep_looping, temperature_reader
+
         parts = message.split()
+        if len(parts) == 0:
+            return
+
         command = parts[0]
         has_parameters = len(parts) > 1
 
@@ -485,8 +492,6 @@ def main():
         if command == "list":
             send_profiles(installation_path, logger)
 
-    seconds = 0
-
     def do_one_second_actions():
         nonlocal activity
         activity.tick()
@@ -495,10 +500,6 @@ def main():
         nonlocal temperature_reader, activity
         temperatures = temperature_reader.temperatures()
         activity.set_temperatures(temperatures)
-
-    poll_period = 0.05
-    polls_in_one_second = 1.0 / poll_period
-    polls = 0
 
     while keep_looping:
         # Non-blocking check for whether there's anything to read on stdin
