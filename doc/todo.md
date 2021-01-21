@@ -19,3 +19,12 @@
 - [ ] Temperature status
     - Even bigger current value?
     - Add desired value on the status line? Its not obvious from the graph. Where would it fit? Get gnuplot to do it somehow?
+- [ ] Sliding window for the graph? e.g. only show 1 hour. Show rest in some kind of compressed form? Could output a different file, and plot with a different colour, on different axes that just happen to coincide. Or same axes, but fudge the times so the curve is compressed.
+- [ ] Actual sliding window on the GUI - send an image that is wider than 320, and use the middle keys to scroll. Nice idea... hmm.
+    - always show right most part
+    - middle keys scroll back and forth.
+    - after a minute, revert.
+    - needs temperature axis on both ends of graph.
+    - calculate graph dimension from profile total time.
+
+
