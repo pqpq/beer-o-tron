@@ -403,7 +403,7 @@ class GraphWriter:
         return self.graph_output_path
 
     def write(self):
-        if (Path(self.temperature_log_path).exists):
+        if Path(self.temperature_log_path).exists:
             run(self.command)
         else:
             self.logger.error("GraphWriter.write(): no temperature file yet")
@@ -535,7 +535,11 @@ def main():
 
     installation_path = "/opt/mash-o-matic/"
     log_path = installation_path + "logs/"
-    gnuplot_file = "/home/pi/beer-o-tron/data/graph.plt"    # change this to install_path/graph.plt
+    gnuplot_command_file = installation_path + "graph.plt"
+
+    if not Path(gnuplot_command_file).is_file():
+        sys.stderr.write("gnuplot file missing: " + gnuplot_command_file + "\n")
+        sys.exit()
 
     temperature_reader = TemperatureReader()
     temperature_reader.start()
@@ -561,14 +565,14 @@ def main():
             activity.change_set_point(temperature)
         else:
             run_path = create_and_record_run_folder(installation_path, "set", logger)
-            activity = Hold(logger, temperature, run_path, temperature_reader.sensor_names(), gnuplot_file)
+            activity = Hold(logger, temperature, run_path, temperature_reader.sensor_names(), gnuplot_command_file)
             update_temperatures()
 
     def preset(profile_name):
         nonlocal activity
         if not activity.is_running_preset(profile_name):
             run_path = create_and_record_run_folder(installation_path, "run_" + sanitized_stem(profile_name), logger)
-            activity = Preset(logger, profile_name, run_path, temperature_reader.sensor_names(), gnuplot_file)
+            activity = Preset(logger, profile_name, run_path, temperature_reader.sensor_names(), gnuplot_command_file)
             update_temperatures()
 
     def decode_message(message):
