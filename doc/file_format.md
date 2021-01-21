@@ -1,57 +1,14 @@
 # Temperature Profile File Format
 
-*Todo*
-
-We need a file format for non-trivial mash profiles:
+Profiles are described in JSON as this is trivial to read and write from Python.
 
 * Short name (listed in the GUI). E.g "Wheat beer"
 * Details. A few sentences, shown to the user in the GUI so they don't have to guess what the short name entails, before committing to a run. E.g. "40' rest for 30mins"
-* Data points
-    * Desired temperature, and how long to hold it
-    * Ramps: start and end temperature, and how long to take. 
-* Some established format like XML? Overly complex?
-* JSON? Bit lighter than XML, and easier to read
-
-## Everything as (incremental time/temperature) pairs
-
-    {
-        "name": "string parsed as name",
-        "description": "string parsed as description",
-        "points" : [
-
-Get to the initial temperature as fast as possible:
-
-            { "minutes": 0, "temperature": 40.0 },
-
-30 minute rest. Its only a rest because the `temperature` is the same as the previous step. The code doesn't interpret it as such, it simply interpolates the required temperature every unit of time, and tries to get the actual temperature to that value.
-
-            { "minutes": 30, "temperature": 40.0 },
-
-15 minute ramp up to 55 degrees.
-
-            { "minutes": 15, "temperature": 55.0 },
-
-20 minute rest
-
-            { "minutes": 20, "temperature": 55.0 },
-
-etc...
-
-            { "minutes": 10, "temperature": 65.0 },
-            { "minutes": 45, "temperature": 65.0 },
-            { "minutes": 10, "temperature": 75.0 },
-        ]
-    }
-
-## Named actions
-
-Would it be clearer if each action had its own name, rather than everything being a temperature point? Quite possibly. This also allows new kinds of step to be added in the future.
-
-e.g.:
+* Steps
 
     {
         "name": "example",
-        "description": "format with named actions",
+        "description": "A sentence or two describing the profile.<br>Can have breaks - it is displayed over several lines.",
         "steps" : [
             { "start": 40.0 }
             { "rest": 30 }
@@ -63,10 +20,14 @@ e.g.:
         ]
     }
 
-* start : get to this temperature ASAP
-* rest : obvious
-* ramp : obvious
-* mashout: ramp to temperature ASAP and hold indefinitely
+| Step      | Value         | Additional values | Action  |
+|:---------:|:-------------:|:-----------------:|:--------|
+| start     | temperature   |                   | Initial temperature |
+| rest      | minutes       |                   | Maintain the previous temperature |
+| ramp      | minutes       | `to` <temperature> | Ramp from previous temperature to the given value, over the given interval |
+| jump      | temperature   |                   | Immediately jump to the new temperature |
+| mashout   | temperature   |                   | Jump to the new temperature and hold it indefinitely |
+
 
 
 ## Ramping the temperature
@@ -77,4 +38,5 @@ Should we enforce this? But what do we do if a file is illegal?
 
 Maybe we can't enforce it, and simple do whatever the file says. Garbage in garbage out. It is unlikely the kit will be able to put in sufficient heat for it to be a problem anyway.
 
-If we don't reach the desired temperature by the required time, presumably we extend the step. We can't really move on! The graph will show the user what has happened.
+If we don't reach the desired temperature by the required time, presumably we extend the step. We can't really move on! The graph will show the user what has happened. We'll have to see how things behave in real life. Extending might be hard to do, especially deciding whether or not you've reached the required value properly (consider noise).
+
