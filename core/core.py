@@ -17,10 +17,6 @@
 # Maybe start off not alway running, and have a good look at the temperature logs,
 # so we can see whether there is a real difference.
 
-# Be intelligent about the number of temperature sensors, and send this
-# to gnuplot so it uses the right column. Or .... put the average value
-# in the first column.
-
 # What happens after a preset Profile expires - we need to extend the
 # time as temperature readings continue. Maybe this will happen automatically
 # because the temperature log will keep growing, and the graph will be
@@ -237,10 +233,10 @@ class Logger:
 class TemperatureLogger(Logger):
     """ A Logger that knows how to log temperatures."""
     def __init__(self, path, temperature_sensor_names):
-        super().__init__(path + "temperature", initial_log = "Time, " + ", ".join(temperature_sensor_names) + ", average")
+        super().__init__(path + "temperature", initial_log = "Time, Average, " + ", ".join(temperature_sensor_names))
 
     def log_temperatures(self, temperatures, average):
-        values = temperatures + [average]
+        values = [average] + temperatures
         values_string = ", ".join(map(str, values))
         self.log(values_string)
 
