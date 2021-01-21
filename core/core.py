@@ -22,8 +22,6 @@
 # because the temperature log will keep growing, and the graph will be
 # updated every 10s?
 
-# Tweak gnuplot so trace starts hard on the left side, not off the axis.
-
 # Send temperature to GUI as fast as possible, but only log every 10s ?
 
 """
@@ -294,22 +292,6 @@ class Profile():
     def graph_data_path(self):
         return self._graph_data_path
 
-    # This could return a list of tuples so it doesn't have to know about send_message() ?
-    @staticmethod
-    def send_list(profiles_folder, logger):
-        folder = profiles_folder + "profiles/"
-        with scandir(folder) as it:
-            for entry in it:
-                if entry.is_file():
-                    filepath = folder + entry.name
-                    profile = json_from_file(filepath, logger)
-                    if profile is not None:
-                        try:
-                            send_message("preset \"" + filepath + "\" \"" + profile["name"] + "\" \"" + profile["description"] + "\"")
-                        except AttributeError:
-                            logger.error("Missing attributes in " + filepath)
-                            logger.error(str(profile))
-
     def __rest_minutes(self):
         seconds = (datetime.now() - self.last_change).total_seconds()
         return int(round(seconds / 60.0))
@@ -366,6 +348,22 @@ class Profile():
                 else:
                     logger.error("Can't make sense of " + str(step))
 
+    @staticmethod
+    def get_list(profiles_folder, logger):
+        """ Get a list of objects describing all the profiles in the profiles_folder."""
+        profile_list = []
+        with scandir(profiles_folder) as it:
+            for entry in it:
+                if entry.is_file():
+                    filepath = profiles_folder + entry.name
+                    profile = json_from_file(filepath, logger)
+                    if profile is not None:
+                        try:
+                            profile_list.append({"filepath":filepath, "name":profile["name"], "description":profile["description"]})
+                        except AttributeError:
+                            logger.error("Missing attributes in " + filepath)
+                            logger.error(str(profile))
+        return profile_list
 
 class GraphWriter:
     """
@@ -534,7 +532,8 @@ def main():
     # then we wouldn't need all these "nonlocal" in the functions.
 
     installation_path = "/opt/mash-o-matic/"
-    log_path = installation_path + "logs/"
+    log_folder           = installation_path + "logs/"
+    profiles_folder      = installation_path + "profiles/"
     gnuplot_command_file = installation_path + "graph.plt"
 
     if not Path(gnuplot_command_file).is_file():
@@ -544,7 +543,7 @@ def main():
     temperature_reader = TemperatureReader()
     temperature_reader.start()
 
-    logger = Logger(log_path + "core", initial_log = "Mash-o-matiC", log_creation_to_stderr = True)
+    logger = Logger(log_folder + "core", initial_log = "Mash-o-matiC", log_creation_to_stderr = True)
 
     activity = Idle(logger)
 
@@ -574,6 +573,11 @@ def main():
             run_path = create_and_record_run_folder(installation_path, "run_" + sanitized_stem(profile_name), logger)
             activity = Preset(logger, profile_name, run_path, temperature_reader.sensor_names(), gnuplot_command_file)
             update_temperatures()
+
+    def send_list():
+        details = Profile.get_list(profiles_folder, logger)
+        for d in details:
+            send_message("preset \"" + d["filepath"] + "\" \"" + d["name"] + "\" \"" + d["description"] + "\"")
 
     def decode_message(message):
         nonlocal activity, logger, keep_looping, temperature_reader
@@ -606,7 +610,7 @@ def main():
                 profile_name = splitbyquotes[1]
                 preset(profile_name)
         if command == "list":
-            Profile.send_list(installation_path, logger)
+            send_list()
 
         nonlocal heard_from_gui
         if not heard_from_gui:
