@@ -74,6 +74,7 @@ def send_message(message):
         pass
 
 def datetime_now_string():
+    """ Get the current time in IS0-8601 format, suitable for including in a file or directory name."""
     return datetime.now().strftime("%Y-%m-%d_%H%M%S")
 
 def json_from_file(filepath, logger):
@@ -94,15 +95,24 @@ def average(values):
         average = average / n
     return average
 
-def log_values_as_csv(log_file, values):
-    values_string = ", ".join(map(str, values))
-    log_file.log(values_string)
-
 def create_folder_for_path(path):
     if not path.endswith("/"):
         path = path + "/"
     Path(path).mkdir(parents=True, exist_ok=True)
     return path
+
+def create_and_record_folder(path, logger):
+    path = create_folder_for_path(path)
+    logger.log("Created " + path)
+    return path
+
+def create_and_record_run_folder(installation_folder, folder_prefix, logger):
+    run_path = installation_folder + "runs/"
+    return create_and_record_folder(run_path + folder_prefix + "_" + datetime_now_string(), logger)
+
+def sanitized_stem(profile_path):
+    stem = Path(profile_path).stem
+    return stem.replace(" ", "-")
 
 
 # Button GPIO
@@ -209,29 +219,40 @@ class TemperatureReader:
 
 class Logger:
     """ A simple file based logger. """
-    def __init__(self, path):
+    def __init__(self, path, initial_log = None, log_creation_to_stderr = False):
         parent = Path(path).parent
         Path(parent).mkdir(parents=True, exist_ok=True)
         self.path = path + "_" + datetime_now_string() + ".log"
         self.file = open(self.path, "a+")
+        if log_creation_to_stderr:
+            sys.stderr.write("Logging to " + self.path + "\n")
+        if initial_log is not None:
+            # we don't want the time logged against the initial entry
+            self.file.write(initial_log + "\n")
+            self.file.flush()
 
     def log(self, text):
-        time = datetime.now().strftime("%H:%M:%S")
+        text = datetime.now().strftime("%H:%M:%S") + ", " + text
         if not text.endswith("\n"):
             text = text + "\n"
-        self.file.write(time + ", " + text)
+        self.file.write(text)
         self.file.flush()
+        return text
 
     def error(self, text):
-        self.log(text)
-        sys.stderr.write(text + "\n")
+        logged_text = self.log(text)
+        sys.stderr.write(logged_text)
 
 
-def create_temperature_log(path, temperature_sensor_names):
-    path = create_folder_for_path(path)
-    temperature_log = Logger(path + "temperature")
-    temperature_log.log(", ".join(temperature_sensor_names) + ", average")
-    return temperature_log
+class TemperatureLogger(Logger):
+    """ A Logger that knows how to log temperatures."""
+    def __init__(self, path, temperature_sensor_names):
+        super().__init__(path + "temperature", initial_log = "Time, " + ", ".join(temperature_sensor_names) + ", average")
+
+    def log_temperatures(self, temperatures, average):
+        values = temperatures + [average]
+        values_string = ", ".join(map(str, values))
+        self.log(values_string)
 
 
 class Profile():
@@ -272,7 +293,7 @@ class Profile():
     """
     def __init__(self, file_path, graph_data_path, logger):
         self.file_path = file_path
-        self.graph_data_path = graph_data_path
+        self._graph_data_path = graph_data_path
         self.start_time = datetime.now()
         self.last_change = self.start_time
         self.logger = logger
@@ -282,6 +303,10 @@ class Profile():
     def create_hold_profile(self, temperature, initial_rest_minutes):
         self.profile = {"name": "Hold", "description": "Automatically generated."}
         self.profile["steps"] = [{"start": temperature}, {"rest": initial_rest_minutes}]
+        self.__update_generated_files()
+
+    def graph_data_path(self):
+        return self._graph_data_path
 
     # This could return a list of tuples so it doesn't have to know about send_message() ?
     @staticmethod
@@ -319,7 +344,7 @@ class Profile():
         self.__update_rest_step()
         self.last_change = datetime.now()
         self.profile["steps"].append({"jump": temperature})
-        self.profile["steps"].append({"rest": Set.rest_additional_minutes})
+        self.profile["steps"].append({"rest": Hold.rest_additional_minutes})
         self.__update_generated_files()
 
     def write(self):
@@ -328,7 +353,7 @@ class Profile():
 
     def write_plot(self):
         """ Write a file containing gnuplot data for the profile."""
-        with open(self.graph_data_path, "w+") as f:
+        with open(self._graph_data_path, "w+") as f:
             run_time = self.start_time
             f.write("Time, Temperature\n")
             temperature = 0
@@ -355,6 +380,47 @@ class Profile():
                 else:
                     logger.error("Can't make sense of " + str(step))
 
+class GraphWriter:
+    """
+    Responsible for using gnuplot to generate a graph image for the GUI.
+
+    Use gnuplot to create or update the graph for the Activity.
+    The graph has a line for the profile, showing what temperature we
+    should be at and a line for the actual temperature.
+    As we log the temperature we update the graph so the user can see
+    what's going on.
+    """
+    def __init__(self, logger, graph_output_path, gnuplot_command_file, temperature_log_path, profile_data_path):
+        """
+        logger: a Logger in case we need to report errors
+        graph_output_path : the path for the graph we are creating
+        gnuplot_command_file: the file describing how to generate the graph
+        temperature_log_path: the path to the temperature log to use for the graph
+        profile_data_path: the path to the profile data to use for the graph
+        """
+        self.logger = logger
+        self.temperature_log_path = temperature_log_path
+        self.graph_output_path = graph_output_path
+        self.command = [
+            "gnuplot",
+            "-c",
+            gnuplot_command_file,
+            self.graph_output_path,
+            "15",
+            "85",
+            self.temperature_log_path,
+            profile_data_path
+        ]
+
+    def path(self):
+        return self.graph_output_path
+
+    def write(self):
+        if (Path(self.temperature_log_path).exists):
+            run(self.command)
+        else:
+            self.logger.error("GraphWriter.write(): no temperature file yet")
+
 
 class Activity:
     """
@@ -379,31 +445,17 @@ class Activity:
             ave = average(temperatures)
             send_message("temp " + str(ave))
             if self.temperature_log is not None:
-                log_values_as_csv(self.temperature_log, temperatures + [ave])
-
-    def update_graph(self):
-        """
-        Use gnuplot to create or update the graph for this Activity.
-        The graph has a line for the profile, showing what temperature we should be at
-        and a line for the actual temperature. As we log the temperature we update
-        the graph so the user can see what's going on.
-        """
-        if (Path(self.temperature_log.path).exists):
-            command = ["gnuplot",
-                       "-c",
-                       self.gnuplot_file,
-                       self.graph_path,
-                       "15",
-                       "85",
-                       self.temperature_log.path,
-                       self.profile.graph_data_path]
-            run(command)
-        else:
-            self.logger.error("Activity.update_graph(): no temperature file yet")
+                self.temperature_log.log_temperatures(temperatures, ave)
 
     def send_updated_graph(self):
-        self.update_graph()
-        send_message("image " + self.graph_path)
+        self.graph.write()
+        send_message("image " + self.graph.path())
+
+    def is_holding_temperature(self):
+        return False
+
+    def is_running_preset(self, preset_profile_name):
+        return False
 
 
 class Idle(Activity):
@@ -411,44 +463,41 @@ class Idle(Activity):
     An Activity where no temperature is being maintained, but we still send
     the current temperature to the GUI.
     """
-    def __init__(logger):
+    def __init__(self, logger):
         super().__init__(logger)
 
 
-class Set(Activity):
-    """ An Activity that maintains a fixed temperature. """
+class Hold(Activity):
+    """ An Activity that maintains a fixed temperature hold Profile. """
 
     # Add time to the current rest so the graph extends into the future a little.
     rest_additional_minutes = 10
 
-    def __init__(self, logger, temperature, path, temperature_sensor_names, gnuplot_file):
+    def __init__(self, logger, temperature, run_folder, temperature_sensor_names, gnuplot_command_file):
         """
         logger: a Logger in case we need to report errors
         temperature: the fixed temperature to maintain
-        path : the directory for storing logs etc, associated with the run
+        run_folder : the folder for storing all files associated with this run
         temperature_sensor_names: list of sensor names for the temperature log file
-        gnuplot_file: the file describing how to generate the graph
+        gnuplot_command_file: the file describing how to generate the graph
         """
         super().__init__(logger)
         self.seconds = 0
-        path = create_folder_for_path(path)
-        self.logger.log("Created " + path)
-        self.temperature_log = create_temperature_log(path, temperature_sensor_names)
+        self.temperature_log = TemperatureLogger(run_folder, temperature_sensor_names)
 
-        self.profile = Profile(path + "profile.json", path + "profile.dat", logger)
-        self.profile.create_hold_profile(temperature, Set.rest_additional_minutes)
-        self.profile.write()
+        self.profile = Profile(run_folder + "profile.json", run_folder + "profile.dat", logger)
+        self.profile.create_hold_profile(temperature, Hold.rest_additional_minutes)
 
-        self.graph_path = path + "graph.png"
-        self.profile.write_plot()
+        self.graph = GraphWriter(logger, run_folder + "graph.png", gnuplot_command_file, self.temperature_log.path, self.profile.graph_data_path())
 
-        self.gnuplot_file = gnuplot_file
+    def is_holding_temperature(self):
+        return True
 
     def tick(self):
         self.seconds = self.seconds + 1
         send_message("time " + str(self.seconds))
         if self.seconds % 60 is 0:
-            self.profile.update_rest(additional_minutes = Set.rest_additional_minutes)
+            self.profile.update_rest(additional_minutes = Hold.rest_additional_minutes)
 
     def change_set_point(self, temperature):
         self.profile.change_set_point(temperature)
@@ -459,30 +508,29 @@ class Set(Activity):
         self.send_updated_graph()
 
 
-class Run(Activity):
-    """ An Activity that runs a temperature profile. """
+class Preset(Activity):
+    """ An Activity that runs a preset temperature Profile. """
 
-    def __init__(self, logger, profile, path, temperature_sensor_names, gnuplot_file):
+    def __init__(self, logger, profile, run_folder, temperature_sensor_names, gnuplot_command_file):
         """
         logger: a Logger in case we need to report errors
         profile: path to the file describing to profile
-        path : the directory for storing logs etc, associated with the run
+        run_folder : the folder for storing all files associated with this run
         temperature_sensor_names: list of sensor names for the temperature log file
-        gnuplot_file: the file describing how to generate the graph
+        gnuplot_command_file: the file describing how to generate the graph
         """
         super().__init__(logger)
         self.seconds = 0
-        path = create_folder_for_path(path)
-        self.logger.log("Created " + path)
-        self.temperature_log = create_temperature_log(path, temperature_sensor_names)
+        self.temperature_log = TemperatureLogger(run_folder, temperature_sensor_names)
 
-        self.profile = Profile(profile, path + "profile.dat", logger)
-        copyfile(profile, path + Path(profile).name)
-
-        self.graph_path = path + "graph.png"
+        self.profile = Profile(profile, run_folder + "profile.dat", logger)
+        copyfile(profile, run_folder + Path(profile).name)
         self.profile.write_plot()
 
-        self.gnuplot_file = gnuplot_file
+        self.graph = GraphWriter(logger, run_folder + "graph.png", gnuplot_command_file, self.temperature_log.path, self.profile.graph_data_path())
+
+    def is_running_preset(self, preset_profile_name):
+        return preset_profile_name == self.profile.file_path
 
     def tick(self):
         self.seconds = self.seconds + 1
@@ -500,27 +548,25 @@ def main():
 
     installation_path = "/opt/mash-o-matic/"
     log_path = installation_path + "logs/"
-    run_path = installation_path + "runs/"
-    gnuplot_file = "/home/pi/beer-o-tron/data/graph.plt"
+    gnuplot_file = "/home/pi/beer-o-tron/data/graph.plt"    # change this to install_path/graph.plt
 
     temperature_reader = TemperatureReader()
     temperature_reader.start()
 
-    logger = Logger(log_path + "core")
-    logger.log("Mash-o-matiC")
-    sys.stderr.write("Logging to " + logger.path + "\n")
+    logger = Logger(log_path + "core", initial_log = "Mash-o-matiC", log_creation_to_stderr = True)
 
-    activity = Idle()
+    activity = Idle(logger)
 
     heard_from_gui = False
     keep_looping = True
-    seconds = 0
-    poll_period = 0.05
-    polls_in_one_second = 1.0 / poll_period
-    polls = 0
 
     def send_splash():
         send_message("image " + installation_path + "splash.png")
+
+    def update_temperatures():
+        nonlocal temperature_reader, activity
+        temperatures = temperature_reader.temperatures()
+        activity.set_temperatures(temperatures)
 
     def decode_message(message):
         nonlocal activity, logger, keep_looping, temperature_reader
@@ -538,50 +584,47 @@ def main():
         if command == "heartbeat":
             # Echo heartbeats so GUI is happy
             send_message(message)
-            nonlocal heard_from_gui
-            if not heard_from_gui:
-                send_splash()
-                heard_from_gui = True
         if command == "idle":
             logger.log(message)
-            activity = Idle()
+            activity = Idle(logger)
             send_splash()
         if command == "set" and has_parameters:
             logger.log(message)
             temperature = float(parts[1])
-            if isinstance(activity, Set):
+            if activity.is_holding_temperature():
                 activity.change_set_point(temperature)
             else:
-                # logic -> util fn()
-                path = run_path + "set_" + datetime_now_string()
-                activity = Set(logger, temperature, path, temperature_reader.sensor_names(), gnuplot_file)
-                temperatures = temperature_reader.temperatures()
-                activity.set_temperatures(temperatures)
+                run_path = create_and_record_run_folder(installation_path, "set", logger)
+                activity = Hold(logger, temperature, run_path, temperature_reader.sensor_names(), gnuplot_file)
+                update_temperatures()
         if command == "run" and has_parameters:
             logger.log(message)
             splitbyquotes = message.split('"')
             if len(splitbyquotes) > 1:
-                profile = splitbyquotes[1]
-                if isinstance(activity, Run) and activity.profile.file_path == profile:
-                    return
-                # put this logic in profile? in a util fn()?
-                profile_name = profile.replace(" ", "-")
-                stem = Path(profile_name).stem
-                path = run_path + "run_" + stem + "_" + datetime_now_string()
-                activity = Run(logger, profile, path, temperature_reader.sensor_names(), gnuplot_file)
-                temperatures = temperature_reader.temperatures()
-                activity.set_temperatures(temperatures)
+                profile_name = splitbyquotes[1]
+                if not activity.is_running_preset(profile_name):
+                    run_path = create_and_record_run_folder(installation_path, "run_" + sanitized_stem(profile_name), logger)
+                    activity = Preset(logger, profile_name, run_path, temperature_reader.sensor_names(), gnuplot_file)
+                    update_temperatures()
         if command == "list":
             Profile.send_list(installation_path, logger)
+
+        nonlocal heard_from_gui
+        if not heard_from_gui:
+            send_splash()
+            heard_from_gui = True
 
     def do_one_second_actions():
         nonlocal activity
         activity.tick()
 
     def do_ten_second_actions():
-        nonlocal temperature_reader, activity
-        temperatures = temperature_reader.temperatures()
-        activity.set_temperatures(temperatures)
+        update_temperatures()
+
+    seconds = 0
+    poll_period = 0.05
+    polls_in_one_second = 1.0 / poll_period
+    polls = 0
 
     while keep_looping:
         # Non-blocking check for whether there's anything to read on stdin
