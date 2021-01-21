@@ -3,15 +3,6 @@
 #######
 # TODO
 
-# Refactor Activity() classes.
-# __init__ for base class?
-# break up the other __init__()s - they're a bit big.
-# Or split out Profile() class first?
-
-# Split out profile generation, graph generation into a class?
-# we're starting to pass around a lot of paths.
-# Create it separately and inject into Activity?
-
 # Write the temperature maintainance logic.
 # - determine hot/cold/ok
 # - GPIO, obviously
@@ -36,6 +27,8 @@
 # updated every 10s?
 
 # Tweak gnuplot so trace starts hard on the left side, not off the axis.
+
+# Send temperature to GUI as fast as possible, but only log every 10s ?
 
 """
 Mash-o-matiC Core.
@@ -101,14 +94,10 @@ def create_folder_for_path(path):
     Path(path).mkdir(parents=True, exist_ok=True)
     return path
 
-def create_and_record_folder(path, logger):
-    path = create_folder_for_path(path)
-    logger.log("Created " + path)
-    return path
-
 def create_and_record_run_folder(installation_folder, folder_prefix, logger):
-    run_path = installation_folder + "runs/"
-    return create_and_record_folder(run_path + folder_prefix + "_" + datetime_now_string(), logger)
+    folder_path = create_folder_for_path(installation_folder + "runs/" + folder_prefix + "_" + datetime_now_string())
+    logger.log("Created " + folder_path)
+    return folder_path
 
 def sanitized_stem(profile_path):
     stem = Path(profile_path).stem
@@ -216,6 +205,7 @@ class TemperatureReader:
         while True:
             self.__read_sensors()
             sleep(1)
+
 
 class Logger:
     """ A simple file based logger. """
@@ -380,6 +370,7 @@ class Profile():
                 else:
                     logger.error("Can't make sense of " + str(step))
 
+
 class GraphWriter:
     """
     Responsible for using gnuplot to generate a graph image for the GUI.
@@ -427,7 +418,7 @@ class Activity:
     Base class for the activity the program is carrying out.
     There is always an instance of Activity, even when we're not doing anything.
     This means the main loop can always pass relevant events to the Activity
-    without testing whether one exists or not.
+    without testing whether one exists or not (null object pattern).
     """
     def __init__(self, logger):
         self.logger = logger
@@ -568,6 +559,22 @@ def main():
         temperatures = temperature_reader.temperatures()
         activity.set_temperatures(temperatures)
 
+    def hold(temperature):
+        nonlocal activity
+        if activity.is_holding_temperature():
+            activity.change_set_point(temperature)
+        else:
+            run_path = create_and_record_run_folder(installation_path, "set", logger)
+            activity = Hold(logger, temperature, run_path, temperature_reader.sensor_names(), gnuplot_file)
+            update_temperatures()
+
+    def preset(profile_name):
+        nonlocal activity
+        if not activity.is_running_preset(profile_name):
+            run_path = create_and_record_run_folder(installation_path, "run_" + sanitized_stem(profile_name), logger)
+            activity = Preset(logger, profile_name, run_path, temperature_reader.sensor_names(), gnuplot_file)
+            update_temperatures()
+
     def decode_message(message):
         nonlocal activity, logger, keep_looping, temperature_reader
 
@@ -582,7 +589,7 @@ def main():
             logger.log(message)
             keep_looping = False
         if command == "heartbeat":
-            # Echo heartbeats so GUI is happy
+            # Echo heartbeats so GUI is happy, but don't log them
             send_message(message)
         if command == "idle":
             logger.log(message)
@@ -591,21 +598,13 @@ def main():
         if command == "set" and has_parameters:
             logger.log(message)
             temperature = float(parts[1])
-            if activity.is_holding_temperature():
-                activity.change_set_point(temperature)
-            else:
-                run_path = create_and_record_run_folder(installation_path, "set", logger)
-                activity = Hold(logger, temperature, run_path, temperature_reader.sensor_names(), gnuplot_file)
-                update_temperatures()
+            hold(temperature)
         if command == "run" and has_parameters:
             logger.log(message)
             splitbyquotes = message.split('"')
             if len(splitbyquotes) > 1:
                 profile_name = splitbyquotes[1]
-                if not activity.is_running_preset(profile_name):
-                    run_path = create_and_record_run_folder(installation_path, "run_" + sanitized_stem(profile_name), logger)
-                    activity = Preset(logger, profile_name, run_path, temperature_reader.sensor_names(), gnuplot_file)
-                    update_temperatures()
+                preset(profile_name)
         if command == "list":
             Profile.send_list(installation_path, logger)
 
