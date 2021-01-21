@@ -2,9 +2,6 @@
 
 Profiles are described in JSON as this is trivial to read and write from Python.
 
-* Short name (listed in the GUI). E.g "Wheat beer"
-* Details. A few sentences, shown to the user in the GUI so they don't have to guess what the short name entails, before committing to a run. E.g. "40' rest for 30mins"
-* Steps
 
     {
         "name": "example",
@@ -20,13 +17,20 @@ Profiles are described in JSON as this is trivial to read and write from Python.
         ]
     }
 
+
+Contents are:
+* A short name (listed in the GUI). E.g "Wheat beer"
+* A description. This is a few sentences, shown to the user in the GUI so they don't have to guess what the short name entails, before committing to a run.
+* The steps:
+
+
 | Step      | Value         | Additional values | Action  |
 |:---------:|:-------------:|:-----------------:|:--------|
-| start     | temperature   |                   | Initial temperature |
-| rest      | minutes       |                   | Maintain the previous temperature |
-| ramp      | minutes       | `to` <temperature> | Ramp from previous temperature to the given value, over the given interval |
-| jump      | temperature   |                   | Immediately jump to the new temperature |
-| mashout   | temperature   |                   | Jump to the new temperature and hold it indefinitely |
+| `start`   | temperature   |                   | Initial temperature |
+| `rest`    | minutes       |                   | Maintain the previous temperature |
+| `ramp`    | minutes       | `to` temperature  | Ramp from previous temperature to the given value, over the given interval |
+| `jump`    | temperature   |                   | Immediately jump to the new temperature |
+| `mashout` | temperature   |                   | Jump to the new temperature and hold it indefinitely |
 
 
 
