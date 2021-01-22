@@ -43,12 +43,13 @@ import select
 from gpiozero import Button
 from time import sleep
 from pathlib import Path
+from shutil import copyfile
 
 from profile import Profile
 from temperature_reader import TemperatureReader
 from graph_writer import GraphWriter
 from activity import Idle, Hold, Preset
-from logger import Logger
+from logger import Logger, TemperatureLogger
 from utils import send_message, datetime_now_string
 
 
@@ -130,15 +131,32 @@ def main():
         if activity.is_holding_temperature():
             activity.change_set_point(temperature)
         else:
-            run_path = create_and_record_run_folder(installation_path, "hold", logger)
-            activity = Hold(logger, temperature, run_path, temperature_reader.sensor_names(), gnuplot_command_file)
+            run_folder = create_and_record_run_folder(installation_path, "hold", logger)
+
+            temperature_logger = TemperatureLogger(run_folder, temperature_reader.sensor_names())
+
+            profile = Profile(run_folder + "profile.json", run_folder + "profile.dat", logger)
+            profile.create_hold_profile(temperature, Hold.rest_additional_minutes)
+
+            graph_writer = GraphWriter(logger, run_folder + "graph.png", gnuplot_command_file, temperature_logger.path, profile.graph_data_path())
+
+            activity = Hold(logger, profile, temperature_logger, graph_writer)
             update_temperatures()
 
     def preset(profile_name):
         nonlocal activity
         if not activity.is_running_preset(profile_name):
-            run_path = create_and_record_run_folder(installation_path, "preset_" + sanitized_stem(profile_name), logger)
-            activity = Preset(logger, profile_name, run_path, temperature_reader.sensor_names(), gnuplot_command_file)
+            run_folder = create_and_record_run_folder(installation_path, "preset_" + sanitized_stem(profile_name), logger)
+
+            temperature_logger = TemperatureLogger(run_folder, temperature_reader.sensor_names())
+
+            copyfile(profile_name, run_folder + Path(profile_name).name)
+            profile = Profile(profile_name, run_folder + "profile.dat", logger)
+            profile.write_plot()
+
+            graph_writer = GraphWriter(logger, run_folder + "graph.png", gnuplot_command_file, temperature_logger.path, profile.graph_data_path())
+
+            activity = Preset(logger, profile, temperature_logger, graph_writer)
             update_temperatures()
 
     def send_list():

@@ -6,11 +6,6 @@ Activity classes
 """
 
 from pathlib import Path
-from shutil import copyfile
-
-from profile import Profile             # inject this dependency!
-from logger import TemperatureLogger    # inject this dependency!
-from graph_writer import GraphWriter    # inject this dependency!
 
 from utils import send_message
 
@@ -76,22 +71,18 @@ class Hold(Activity):
     # Add time to the current rest so the graph extends into the future a little.
     rest_additional_minutes = 10
 
-    def __init__(self, logger, temperature, run_folder, temperature_sensor_names, gnuplot_command_file):
+    def __init__(self, logger, profile, temperature_logger, graph_writer):
         """
         logger: a Logger in case we need to report errors
-        temperature: the fixed temperature to maintain
-        run_folder : the folder for storing all files associated with this run
-        temperature_sensor_names: list of sensor names for the temperature log file
-        gnuplot_command_file: the file describing how to generate the graph
+        profile: the Profile to run
+        temperature_logger: the TemperatureLogger that is logging temperature for this profile
+        graph_writer: the GraphWriter that is creating the graph for this profile
         """
         super().__init__(logger)
         self.seconds = 0
-        self.temperature_log = TemperatureLogger(run_folder, temperature_sensor_names)
-
-        self.profile = Profile(run_folder + "profile.json", run_folder + "profile.dat", logger)
-        self.profile.create_hold_profile(temperature, Hold.rest_additional_minutes)
-
-        self.graph = GraphWriter(logger, run_folder + "graph.png", gnuplot_command_file, self.temperature_log.path, self.profile.graph_data_path())
+        self.temperature_log = temperature_logger
+        self.profile = profile
+        self.graph = graph_writer
 
     def is_holding_temperature(self):
         return True
@@ -114,23 +105,18 @@ class Hold(Activity):
 class Preset(Activity):
     """ An Activity that runs a preset temperature Profile. """
 
-    def __init__(self, logger, profile, run_folder, temperature_sensor_names, gnuplot_command_file):
+    def __init__(self, logger, profile, temperature_logger, graph_writer):
         """
         logger: a Logger in case we need to report errors
-        profile: path to the file describing to profile
-        run_folder : the folder for storing all files associated with this run
-        temperature_sensor_names: list of sensor names for the temperature log file
-        gnuplot_command_file: the file describing how to generate the graph
+        profile: the Profile to run
+        temperature_logger: the TemperatureLogger that is logging temperature for this profile
+        graph_writer: the GraphWriter that is creating the graph for this profile
         """
         super().__init__(logger)
         self.seconds = 0
-        self.temperature_log = TemperatureLogger(run_folder, temperature_sensor_names)
-
-        self.profile = Profile(profile, run_folder + "profile.dat", logger)
-        copyfile(profile, run_folder + Path(profile).name)
-        self.profile.write_plot()
-
-        self.graph = GraphWriter(logger, run_folder + "graph.png", gnuplot_command_file, self.temperature_log.path, self.profile.graph_data_path())
+        self.temperature_log = temperature_logger
+        self.profile = profile
+        self.graph = graph_writer
 
     def is_running_preset(self, preset_profile_name):
         return preset_profile_name == self.profile.file_path
