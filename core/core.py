@@ -3,8 +3,6 @@
 #######
 # TODO
 
-# rename run dirs to hold and preset to match terminology
-
 # Write the temperature maintainance logic.
 # - determine hot/cold/ok
 # - GPIO, obviously
@@ -132,14 +130,14 @@ def main():
         if activity.is_holding_temperature():
             activity.change_set_point(temperature)
         else:
-            run_path = create_and_record_run_folder(installation_path, "set", logger)
+            run_path = create_and_record_run_folder(installation_path, "hold", logger)
             activity = Hold(logger, temperature, run_path, temperature_reader.sensor_names(), gnuplot_command_file)
             update_temperatures()
 
     def preset(profile_name):
         nonlocal activity
         if not activity.is_running_preset(profile_name):
-            run_path = create_and_record_run_folder(installation_path, "run_" + sanitized_stem(profile_name), logger)
+            run_path = create_and_record_run_folder(installation_path, "preset_" + sanitized_stem(profile_name), logger)
             activity = Preset(logger, profile_name, run_path, temperature_reader.sensor_names(), gnuplot_command_file)
             update_temperatures()
 
@@ -168,11 +166,11 @@ def main():
             logger.log(message)
             activity = Idle(logger)
             send_splash()
-        if command == "set" and has_parameters:
+        if command == "hold" and has_parameters:
             logger.log(message)
             temperature = float(parts[1])
             hold(temperature)
-        if command == "run" and has_parameters:
+        if command == "preset" and has_parameters:
             logger.log(message)
             splitbyquotes = message.split('"')
             if len(splitbyquotes) > 1:
