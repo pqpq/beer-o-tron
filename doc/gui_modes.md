@@ -36,12 +36,12 @@ General points:
 
 | Button | Icon | Action | Next State |
 |--------|------|--------|------------|
-| 1      | Thermometer | | Set Temperature |
+| 1      | Thermometer | | Hold Temperature |
 | 2      | Timeline | Repopulate list | Preset Choose |
 | 3      |      |        |            |
 | 4      | Stop | Send `allstop` | |
 
-## Set Temperature
+## Hold Temperature
 
 * Displays the preset temperature in the middle of the screen and allows the user to change it.
 
@@ -50,17 +50,17 @@ General points:
 | 1      | X    | Send `idle`| Top        |
 | 2      | -    | Decrease temperature |  |
 | 3      | +    | Increase temperature |  |
-| 4      | Tick | Send `set <temperature>` | Set Run |
+| 4      | Tick | Send `hold <temperature>` | Hold Run |
 
-## Set Run
+## Hold Run
 
-* Core is maintaining the set temperature.
+* Core is holding the set temperature.
 * Button 1 allows the user to check the temperature or alter it.
 * Button 4 is always present when running, as an "emergency stop"
 
 | Button | Icon | Action | Next State |
 |--------|------|--------|------------|
-| 1      | Menu |        | Set Temperature |
+| 1      | Menu |        | Hold Temperature |
 | 2      |      |        |            |
 | 3      |      |        |            |
 | 4      | Stop | Send `allstop` | Top |

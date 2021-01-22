@@ -323,7 +323,7 @@ Window {
             }
 
             function set() {
-                messages.send("set " + valueString)
+                messages.send("hold " + valueString)
             }
 
             Text {
@@ -389,7 +389,7 @@ Window {
 
             function run() {
                 const obj = model.get(currentIndex)
-                messages.send("run \"" + obj.id + '"')
+                messages.send("preset \"" + obj.id + '"')
             }
 
             delegate: Text {
@@ -466,10 +466,10 @@ Window {
                 PropertyChanges { target: presetDetails; visible: false }
 
                 readonly property var actions: [menu.noAction, presetList.repopulate, menu.noAction, menu.allStop]
-                readonly property var nextStates: ["set.temperature", "preset.choose", "", ""]
+                readonly property var nextStates: ["hold.temperature", "preset.choose", "", ""]
             },
             State {
-                name: "set.temperature"
+                name: "hold.temperature"
                 PropertyChanges { target: button1; icon.source: "qrc:/icons/close.svg" }
                 PropertyChanges { target: button2; icon.source: "qrc:/icons/remove.svg"; enabled: temperatureSetter.canDecrease() }
                 PropertyChanges { target: button3; icon.source: "qrc:/icons/add.svg"; enabled: temperatureSetter.canIncrease()}
@@ -480,10 +480,10 @@ Window {
                 PropertyChanges { target: presetDetails; visible: false }
 
                 readonly property var actions: [menu.idle, temperatureSetter.decrease, temperatureSetter.increase, temperatureSetter.set]
-                readonly property var nextStates: ["top", "", "", "set.run"]
+                readonly property var nextStates: ["top", "", "", "hold.run"]
             },
             State {
-                name: "set.run"
+                name: "hold.run"
                 PropertyChanges { target: button1; icon.source: "qrc:/icons/menu.svg" }
                 PropertyChanges { target: button2; icon.source: ""; enabled: true }
                 PropertyChanges { target: button3; icon.source: ""; enabled: true }
@@ -494,7 +494,7 @@ Window {
                 PropertyChanges { target: presetDetails; visible: false }
 
                 readonly property var actions: [menu.noAction, menu.noAction, menu.noAction, menu.allStop]
-                readonly property var nextStates: ["set.temperature", "", "", "top"]
+                readonly property var nextStates: ["hold.temperature", "", "", "top"]
             },
             State {
                 name: "preset.choose"

@@ -25,8 +25,8 @@ Message|Parameters|Meaning
 ---|---|---
 `bye` | | GUI is shutting down.
 `heartbeat` | | GUI wants to check the core is there.
-`set` | *degrees* | Maintain a set temperature.<br> *degrees* : (float) The temperature to maintain in degrees Centigrade. 
+`hold` | *degrees* | Hold a set temperature.<br> *degrees* : (float) The temperature to maintain in degrees Centigrade. 
 `allstop` |  | Stop heat and pump immediately.
 `list` |  | Request the list of pre-set profiles.<br>When this is sent the GUI clears its list, so any `preset` messages will populate the new list rather than overwrite the old.
-`run` | *id* | Run the pre-set temperature profile called *id* (delimited in double quotes).
+`preset` | *id* | Run the pre-set temperature profile called *id* (delimited in double quotes).
 `idle` | | Stop the preset or set temperature program.
