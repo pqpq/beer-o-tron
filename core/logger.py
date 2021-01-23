@@ -34,6 +34,10 @@ class Logger:
         self.file.flush()
         return text
 
+    def log_values(self, values):
+        values_string = ", ".join(map(str, values))
+        self.log(values_string)
+
     def error(self, text):
         logged_text = self.log(text)
         sys.stderr.write(logged_text)
@@ -45,6 +49,4 @@ class TemperatureLogger(Logger):
         super().__init__(path + "temperature", initial_log = "Time, Average, " + ", ".join(temperature_sensor_names))
 
     def log_temperatures(self, temperatures, average):
-        values = [average] + temperatures
-        values_string = ", ".join(map(str, values))
-        self.log(values_string)
+        self.log_values([average] + temperatures)

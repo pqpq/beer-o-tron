@@ -6,6 +6,8 @@ Activity classes
 """
 
 from pathlib import Path
+from enum import Enum
+import math
 
 from utils import send_message
 
@@ -21,6 +23,11 @@ def average(values):
 
 
 class Activity:
+    class State(Enum):
+        HOT = 1
+        COLD = 2
+        OK = 3
+
     """
     Base class for the activity the program is carrying out.
     There is always an instance of Activity, even when we're not doing anything.
@@ -30,6 +37,7 @@ class Activity:
     def __init__(self, logger):
         self.logger = logger
         self.temperature_log = None
+        self.graph = None
 
     def __del__(self):
         # stop pump & heater?
@@ -44,16 +52,29 @@ class Activity:
             send_message("temp " + str(ave))
             if self.temperature_log is not None:
                 self.temperature_log.log_temperatures(temperatures, ave)
+            return ave
+        return math.nan
 
     def send_updated_graph(self):
-        self.graph.write()
-        send_message("image " + self.graph.path())
+        if self.graph is not None:
+            self.graph.write()
+            send_message("image " + self.graph.path())
 
     def is_holding_temperature(self):
         return False
 
     def is_running_preset(self, preset_profile_name):
         return False
+
+    def determine_state(self, average, seconds):
+        target = self.profile.temperature_at(seconds)
+        state = Activity.State.OK
+        if not math.isnan(target):
+            if average < target - 0.5:
+                state = Activity.State.COLD
+            if average > target + 0.5:
+                state = Activity.State.HOT
+        return target, state
 
 
 class Idle(Activity):
@@ -64,6 +85,9 @@ class Idle(Activity):
     def __init__(self, logger):
         super().__init__(logger)
 
+    def set_temperatures(self, temperatures):
+        average = super().set_temperatures(temperatures)
+        return average, Activity.State.OK
 
 class Hold(Activity):
     """ An Activity that maintains a fixed temperature hold Profile. """
@@ -98,8 +122,8 @@ class Hold(Activity):
         self.send_updated_graph()
 
     def set_temperatures(self, temperatures):
-        super().set_temperatures(temperatures)
-        self.send_updated_graph()
+        average = super().set_temperatures(temperatures)
+        return self.determine_state(average, self.seconds)
 
 
 class Preset(Activity):
@@ -126,5 +150,5 @@ class Preset(Activity):
         send_message("time " + str(self.seconds))
 
     def set_temperatures(self, temperatures):
-        super().set_temperatures(temperatures)
-        self.send_updated_graph()
+        average = super().set_temperatures(temperatures)
+        return self.determine_state(average, self.seconds)

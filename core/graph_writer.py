@@ -19,13 +19,14 @@ class GraphWriter:
     As we log the temperature we update the graph so the user can see
     what's going on.
     """
-    def __init__(self, logger, graph_output_path, gnuplot_command_file, temperature_log_path, profile_data_path):
+    def __init__(self, logger, graph_output_path, gnuplot_command_file, temperature_log_path, profile_data_path, state_log_path):
         """
         logger: a Logger in case we need to report errors
         graph_output_path : the path for the graph we are creating
         gnuplot_command_file: the file describing how to generate the graph
         temperature_log_path: the path to the temperature log to use for the graph
         profile_data_path: the path to the profile data to use for the graph
+        state_log_path: the path to the state data to use for the graph
         """
         self.logger = logger
         self.temperature_log_path = temperature_log_path

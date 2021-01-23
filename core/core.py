@@ -40,7 +40,7 @@ The C++ GUI is just the human interface to this.
 
 import sys
 import select
-from gpiozero import Button
+from gpiozero import Button, LED
 from time import sleep
 from pathlib import Path
 from shutil import copyfile
@@ -48,7 +48,7 @@ from shutil import copyfile
 from profile import Profile
 from temperature_reader import TemperatureReader
 from graph_writer import GraphWriter
-from activity import Idle, Hold, Preset
+from activity import Idle, Hold, Preset, Activity
 from logger import Logger, TemperatureLogger
 from utils import send_message, datetime_now_string
 
@@ -71,18 +71,21 @@ def sanitized_stem(profile_path):
     return stem.replace(" ", "-")
 
 
-# Button GPIO
+# GPIO
+
+button1 = Button(17)
+button2 = Button(22)
+button3 = Button(23)
+button4 = Button(27)
+
+heater = LED(20)
+pump = LED(21)
 
 def send_down(button):
     return lambda : send_message("button "+str(button)+" down")
 
 def send_up(button):
     return lambda : send_message("button "+str(button)+" up")
-
-button1 = Button(17)
-button2 = Button(22)
-button3 = Button(23)
-button4 = Button(27)
 
 button1.when_pressed = send_down(1)
 button1.when_released = send_up(1)
@@ -93,16 +96,22 @@ button3.when_released = send_up(3)
 button4.when_pressed = send_down(4)
 button4.when_released = send_up(4)
 
+def all_off():
+    pump.off()
+    heater.off()
+
 
 def main():
 
     # should all this be in a big "application" class?
     # then we wouldn't need all these "nonlocal" in the functions.
 
-    installation_path = "/opt/mash-o-matic/"
+    installation_path    = "/opt/mash-o-matic/"
     log_folder           = installation_path + "logs/"
     profiles_folder      = installation_path + "profiles/"
     gnuplot_command_file = installation_path + "graph.plt"
+
+    all_off()
 
     if not Path(gnuplot_command_file).is_file():
         sys.stderr.write("gnuplot file missing: " + gnuplot_command_file + "\n")
@@ -112,6 +121,7 @@ def main():
     temperature_reader.start()
 
     logger = Logger(log_folder + "core", initial_log = "Mash-o-matiC", log_creation_to_stderr = True)
+    state_logger = None
 
     activity = Idle(logger)
 
@@ -124,37 +134,54 @@ def main():
     def update_temperatures():
         nonlocal temperature_reader, activity
         temperatures = temperature_reader.temperatures()
-        activity.set_temperatures(temperatures)
+        target, state = activity.set_temperatures(temperatures)
+        if state == Activity.State.HOT:
+            send_message("hot")
+            heater.off()
+            # start timer to turn pump off after a minute or something?
+        if state == Activity.State.COLD:
+            send_message("cold")
+            pump.on()
+            heater.on()
+        if state == Activity.State.OK:
+            send_message("ok")
+            heater.off()
+            # timer?
+        if state_logger is not None:
+            state_logger.log_values([target, 1 if heater.is_lit else 0, 1 if pump.is_lit else 0])
+        activity.send_updated_graph()
 
     def hold(temperature):
-        nonlocal activity
+        nonlocal activity, state_logger
         if activity.is_holding_temperature():
             activity.change_set_point(temperature)
         else:
             run_folder = create_and_record_run_folder(installation_path, "hold", logger)
 
             temperature_logger = TemperatureLogger(run_folder, temperature_reader.sensor_names())
+            state_logger = Logger(run_folder + "state", initial_log = "Time, Target, Heater, Pump")
 
             profile = Profile(run_folder + "profile.json", run_folder + "profile.dat", logger)
             profile.create_hold_profile(temperature, Hold.rest_additional_minutes)
 
-            graph_writer = GraphWriter(logger, run_folder + "graph.png", gnuplot_command_file, temperature_logger.path, profile.graph_data_path())
+            graph_writer = GraphWriter(logger, run_folder + "graph.png", gnuplot_command_file, temperature_logger.path, profile.graph_data_path(), state_logger.path)
 
             activity = Hold(logger, profile, temperature_logger, graph_writer)
             update_temperatures()
 
     def preset(profile_name):
-        nonlocal activity
+        nonlocal activity, state_logger
         if not activity.is_running_preset(profile_name):
             run_folder = create_and_record_run_folder(installation_path, "preset_" + sanitized_stem(profile_name), logger)
 
             temperature_logger = TemperatureLogger(run_folder, temperature_reader.sensor_names())
+            state_logger = Logger(run_folder + "state", initial_log = "Time, Target, Heater, Pump")
 
             copyfile(profile_name, run_folder + Path(profile_name).name)
             profile = Profile(profile_name, run_folder + "profile.dat", logger)
             profile.write_plot()
 
-            graph_writer = GraphWriter(logger, run_folder + "graph.png", gnuplot_command_file, temperature_logger.path, profile.graph_data_path())
+            graph_writer = GraphWriter(logger, run_folder + "graph.png", gnuplot_command_file, temperature_logger.path, profile.graph_data_path(), state_logger.path)
 
             activity = Preset(logger, profile, temperature_logger, graph_writer)
             update_temperatures()
@@ -163,6 +190,14 @@ def main():
         details = Profile.get_list(profiles_folder, logger)
         for d in details:
             send_message("preset \"" + d["filepath"] + "\" \"" + d["name"] + "\" \"" + d["description"] + "\"")
+
+    def go_to_idle():
+        nonlocal activity, state_logger
+        activity = Idle(logger)
+        all_off()
+        state_logger = None
+        send_splash()
+        send_message("ok")
 
     def decode_message(message):
         nonlocal activity, logger, keep_looping, temperature_reader
@@ -182,8 +217,7 @@ def main():
             send_message(message)
         if command == "idle":
             logger.log(message)
-            activity = Idle(logger)
-            send_splash()
+            go_to_idle()
         if command == "hold" and has_parameters:
             logger.log(message)
             temperature = float(parts[1])
@@ -196,6 +230,10 @@ def main():
                 preset(profile_name)
         if command == "list":
             send_list()
+        if command == "allstop":
+            logger.log(message)
+            all_off()
+            go_to_idle()
 
         nonlocal heard_from_gui
         if not heard_from_gui:
@@ -234,4 +272,9 @@ def main():
 
 if __name__ == "__main__":
     sys.stderr.write("Mash-o-matiC core\n")
-    main()
+    try:
+        main()
+        all_off()
+    except:
+        all_off()
+        raise

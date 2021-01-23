@@ -6,6 +6,7 @@ Profile class
 """
 
 import json
+import math
 from pathlib import Path
 from datetime import datetime, timedelta
 from os import scandir
@@ -105,6 +106,57 @@ class Profile():
     def write(self):
         with open(self.file_path, "w+") as f:
             json.dump(self.profile, f, indent=4)
+
+    def temperature_at(self, seconds):
+        step_start_temperature = 0
+        step_start_seconds = 0
+
+        step_end_temperature = math.nan
+        step_end_seconds = 0
+
+        elapsed_seconds = 0
+
+        print("Profile.temperature_at(",seconds,"")
+        for step in self.profile["steps"]:
+            keys = list(step)
+            print(str(step))
+            if len(keys) > 0:
+                step_duration = 0
+                if keys[0] == "start":
+                    step_start_temperature = step["start"]
+                    step_end_temperature = step_start_temperature
+                if keys[0] == "rest":
+                    step_start_temperature = step_end_temperature
+                    step_duration = step["rest"] * 60
+                if keys[0] == "ramp":
+                    step_start_temperature = step_end_temperature
+                    step_end_temperature = step["to"]
+                    step_duration = step["ramp"] * 60
+                if keys[0] == "mashout":
+                    step_start_temperature = step["mashout"]
+                    step_end_temperature = step_start_temperature
+                    step_duration = 99999
+                if keys[0] == "jump":
+                    step_start_temperature = step["jump"]
+                    step_end_temperature = step_start_temperature
+                    step_duration = 0
+
+                step_start_seconds = elapsed_seconds
+                elapsed_seconds = elapsed_seconds + step_duration
+                step_end_seconds = elapsed_seconds
+                print("  step_start_seconds", step_start_seconds)
+                print("  step_start_temperature", step_start_temperature)
+                print("  step_end_seconds", step_end_seconds)
+                print("  step_end_temperature", step_end_temperature)
+                if (step_start_seconds <= seconds) and (seconds <= step_end_seconds):
+                    interpolated_temperature = step_start_temperature
+                    if step_duration != 0:
+                        proportion = (seconds - step_start_seconds) / step_duration
+                        interpolated_temperature = step_start_temperature + (step_end_temperature - step_start_temperature) * proportion
+                        print("  INTERPOLATED", interpolated_temperature)
+                    return interpolated_temperature
+
+        return step_end_temperature
 
     def write_plot(self):
         """ Write a file containing gnuplot data for the profile."""
