@@ -39,7 +39,8 @@ class GraphWriter:
             "15",
             "85",
             self.temperature_log_path,
-            profile_data_path
+            profile_data_path,
+            state_log_path
         ]
 
     def path(self):
