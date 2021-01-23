@@ -43,7 +43,7 @@ class TemperatureReader:
                 try:
                     value = float(raw_value)
                 except ValueError:
-                    sys.stderr.write("Couldn't parse '" + rawvalue + "'\n")
+                    sys.stderr.write("Couldn't parse '" + raw_value + "'\n")
                 else:
                     lock.acquire()
                     self.value = value / 1000
