@@ -6,6 +6,7 @@ DS18B20 temperature sensor management
 """
 
 import threading
+import sys
 from time import sleep
 
 
