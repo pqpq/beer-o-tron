@@ -82,7 +82,7 @@ class Profile():
 
     def __rest_minutes(self):
         seconds = (datetime.now() - self.last_change).total_seconds()
-        return int(round(seconds / 60.0))
+        return seconds / 60.0
 
     def __update_generated_files(self):
         self.write()
