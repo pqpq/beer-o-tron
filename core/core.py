@@ -97,8 +97,8 @@ button4.when_pressed = send_down(4)
 button4.when_released = send_up(4)
 
 def all_off():
-    pump.off()
     heater.off()
+    pump.off()
     send_message("heat off")
     send_message("pump off")
 
