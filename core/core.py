@@ -99,6 +99,8 @@ button4.when_released = send_up(4)
 def all_off():
     pump.off()
     heater.off()
+    send_message("heat off")
+    send_message("pump off")
 
 
 def main():
@@ -131,21 +133,37 @@ def main():
     def send_splash():
         send_message("image " + installation_path + "splash.png")
 
+    def turn_heater_on():
+        heater.on()
+        send_message("heat on")
+
+    def turn_heater_off():
+        heater.off()
+        send_message("heat off")
+
+    def turn_pump_on():
+        pump.on()
+        send_message("pump on")
+
+    def turn_pump_off():
+        pump.off()
+        send_message("pump off")
+
     def update_temperatures():
         nonlocal temperature_reader, activity
         temperatures = temperature_reader.temperatures()
         target, state = activity.set_temperatures(temperatures)
         if state == Activity.State.HOT:
             send_message("hot")
-            heater.off()
+            turn_heater_off()
             # start timer to turn pump off after a minute or something?
         if state == Activity.State.COLD:
             send_message("cold")
-            pump.on()
-            heater.on()
+            turn_pump_on()
+            turn_heater_on()
         if state == Activity.State.OK:
             send_message("ok")
-            heater.off()
+            turn_heater_off()
             # timer?
         if state_logger is not None:
             state_logger.log_values([target, 1 if heater.is_lit else 0, 1 if pump.is_lit else 0])
@@ -167,7 +185,7 @@ def main():
             graph_writer = GraphWriter(logger, run_folder + "graph.png", gnuplot_command_file, temperature_logger.path, profile.graph_data_path(), state_logger.path)
 
             activity = Hold(logger, profile, temperature_logger, graph_writer)
-            update_temperatures()
+        update_temperatures()
 
     def preset(profile_name):
         nonlocal activity, state_logger
@@ -231,8 +249,8 @@ def main():
         if command == "list":
             send_list()
         if command == "allstop":
+            all_off()   # do this first, before complex functions that might throw exceptions
             logger.log(message)
-            all_off()
             go_to_idle()
 
         nonlocal heard_from_gui

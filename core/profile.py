@@ -110,16 +110,11 @@ class Profile():
     def temperature_at(self, seconds):
         step_start_temperature = 0
         step_start_seconds = 0
-
         step_end_temperature = math.nan
         step_end_seconds = 0
-
         elapsed_seconds = 0
-
-        print("Profile.temperature_at(",seconds,"")
         for step in self.profile["steps"]:
             keys = list(step)
-            print(str(step))
             if len(keys) > 0:
                 step_duration = 0
                 if keys[0] == "start":
@@ -144,16 +139,11 @@ class Profile():
                 step_start_seconds = elapsed_seconds
                 elapsed_seconds = elapsed_seconds + step_duration
                 step_end_seconds = elapsed_seconds
-                print("  step_start_seconds", step_start_seconds)
-                print("  step_start_temperature", step_start_temperature)
-                print("  step_end_seconds", step_end_seconds)
-                print("  step_end_temperature", step_end_temperature)
                 if (step_start_seconds <= seconds) and (seconds <= step_end_seconds):
                     interpolated_temperature = step_start_temperature
                     if step_duration != 0:
                         proportion = (seconds - step_start_seconds) / step_duration
                         interpolated_temperature = step_start_temperature + (step_end_temperature - step_start_temperature) * proportion
-                        print("  INTERPOLATED", interpolated_temperature)
                     return interpolated_temperature
 
         return step_end_temperature
