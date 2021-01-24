@@ -453,6 +453,7 @@ Window {
         id: menu
         state: "top"
 
+        onStateChanged: console.log("Menu.state=", state)
         states: [
             State {
                 name: "top"
@@ -537,6 +538,20 @@ Window {
 
                 readonly property var actions: [menu.noAction, menu.noAction, menu.noAction, menu.allStop]
                 readonly property var nextStates: ["preset.confirm", "", "", "top"]
+            },
+            State {
+                name: "test"
+                PropertyChanges { target: button1; icon.source: "qrc:/icons/back.svg" }
+                PropertyChanges { target: button2; icon.source: "qrc:/icons/pump.svg"; enabled: true }
+                PropertyChanges { target: button3; icon.source: "qrc:/icons/flame.svg"; enabled: true }
+                PropertyChanges { target: button4; visible: false }
+                PropertyChanges { target: stopButton; visible: true }
+                PropertyChanges { target: temperatureSetter; visible: false }
+                PropertyChanges { target: presetList; visible: false }
+                PropertyChanges { target: presetDetails; visible: false }
+
+                readonly property var actions: [menu.idle, menu.noAction, menu.noAction, menu.allStop]
+                readonly property var nextStates: ["top", "", "", "top"]
             }
         ]
 
@@ -551,7 +566,7 @@ Window {
         }
 
         function buttonPressed(button) {
-            //console.log("buttonPressed(" + button + ")")
+            console.log("buttonPressed(" + button + ")")
 
             if (button < 1 || button > 4)
                 return
@@ -573,6 +588,15 @@ Window {
             }
             if (nextState !== "") {
                 menu.state = nextState
+            }
+        }
+
+        function vulcanNervePinch() {
+            console.log("menu.vulcanNervePinch()", menu.state)
+
+            if (menu.state == "top") {
+                messages.send("testmode")
+                menu.state = "test"
             }
         }
 
@@ -744,15 +768,26 @@ Window {
         property var pressed: [false, false, false, false]
 
         function buttonUpdate(button, isPressed) {
-            //console.log("buttonPressAndHoldTimer.buttonUpdate(" + button + ", " + isPressed + ")")
+            console.log("buttonPressAndHoldTimer.buttonUpdate(" + button + ", " + isPressed + ")")
             if (0 < button && button < 5) {
+                const wasPressed = [].concat(pressed)
                 pressed[button-1] = isPressed
                 counts[button-1] = 0
                 if (isPressed) {
-                    menu.buttonPressed(button)
-                    start()
+                    if (pressed[0] && pressed[3]) {
+                        menu.vulcanNervePinch()
+                        // we don't want the button up to trigger another press
+                        pressed[0] = false
+                        pressed[3] = false
+                    }
+                    else {
+                        start()
+                    }
                 }
                 else {
+                    if (wasPressed[button-1]) {
+                        menu.buttonPressed(button)
+                    }
                     const anyPressed = pressed[0] || pressed[1] || pressed[2] || pressed[3]
                     if (!anyPressed) {
                         stop()
@@ -760,9 +795,9 @@ Window {
                 }
             }
 
-            //for (let i = 0; i < 4; i++) {
-            //    console.log("  ", i, pressed[i], counts[i])
-            //}
+            for (let i = 0; i < 4; i++) {
+                console.log("  ", i, pressed[i], counts[i])
+            }
         }
 
         onTriggered: {
