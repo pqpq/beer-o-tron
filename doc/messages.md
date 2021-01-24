@@ -30,3 +30,4 @@ Message|Parameters|Meaning
 `list` |  | Request the list of pre-set profiles.<br>When this is sent the GUI clears its list, so any `preset` messages will populate the new list rather than overwrite the old.
 `preset` | *id* | Run the pre-set temperature profile called *id* (delimited in double quotes).
 `idle` | | Stop the preset or set temperature program.
+`testmode`| | Enter test mode.

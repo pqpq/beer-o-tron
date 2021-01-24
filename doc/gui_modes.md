@@ -33,6 +33,7 @@ General points:
 
 * All transitions into this state involve sending `idle`, so the core can tell the GUI to display the splash screen *if it wants*.
 * Transitioning to *Preset Choose* involves repopulating the list: we clear the local data and send `list` which tells the core to send the list entries. This happens every time so the GUI is effectively stateless w.r.t. the list.
+* Pressing buttons 4 and 1 together -> Test mode (sends `testmode` message).
 
 | Button | Icon | Action | Next State |
 |--------|------|--------|------------|
@@ -41,7 +42,6 @@ General points:
 | 3      |      |        |            |
 | 4      | Stop | Send `allstop` | |
 
-Press and hold button 4 -> Test mode
 
 ## Hold Temperature
 
