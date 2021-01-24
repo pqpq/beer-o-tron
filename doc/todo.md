@@ -15,7 +15,7 @@
 - [ ] Instead of wordy description of each profile, we could simply graph it and show that. Tiny icon size graph with no axes, just to get a feel? Or show a bit graph in the background of the confirmation page? Too subtle? Or have 2 columns: words, alongside small graph?
 - [ ] Calculate total length of a profile and automatically add this to the description, or have it as a new field in the `preset` message?
 - [ ] Every run's data file and final graph must be named with date and time, and kept for auditing. Is this any different to keeping the .../runs/xxx/ directory?
-- [ ] Rename `set` and `run` to `hold` and `preset` to match the terminology that has evolved in the Python.
+- [x] Rename `set` and `run` to `hold` and `preset` to match the terminology that has evolved in the Python.
 - [ ] Temperature status
     - Even bigger current value?
     - Add desired value on the status line? Its not obvious from the graph. Where would it fit? Get gnuplot to do it somehow?
@@ -26,5 +26,8 @@
     - after a minute, revert.
     - needs temperature axis on both ends of graph.
     - calculate graph dimension from profile total time.
-
+- [ ] Test mode. Long press, or press 2 buttons at once.
+    - Pump on & off
+    - Heater on & off
+    - Show all temperature readings
 
