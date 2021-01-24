@@ -480,7 +480,6 @@ Window {
         id: menu
         state: "top"
 
-        onStateChanged: console.log("Menu.state=", state)
         states: [
             State {
                 name: "top"
@@ -600,7 +599,7 @@ Window {
         }
 
         function buttonPressed(button) {
-            console.log("buttonPressed(" + button + ")")
+            //console.log("buttonPressed(" + button + ")")
 
             if (button < 1 || button > 4)
                 return
@@ -626,8 +625,6 @@ Window {
         }
 
         function vulcanNervePinch() {
-            console.log("menu.vulcanNervePinch()", menu.state)
-
             if (menu.state == "top") {
                 messages.send("testmode")
                 menu.state = "test"
@@ -808,7 +805,7 @@ Window {
         property var pressed: [false, false, false, false]
 
         function buttonUpdate(button, isPressed) {
-            console.log("buttonPressAndHoldTimer.buttonUpdate(" + button + ", " + isPressed + ")")
+            //console.log("buttonPressAndHoldTimer.buttonUpdate(" + button + ", " + isPressed + ")")
             if (0 < button && button < 5) {
                 const wasPressed = [].concat(pressed)
                 pressed[button-1] = isPressed
@@ -835,9 +832,9 @@ Window {
                 }
             }
 
-            for (let i = 0; i < 4; i++) {
-                console.log("  ", i, pressed[i], counts[i])
-            }
+            //for (let i = 0; i < 4; i++) {
+            //    console.log("  ", i, pressed[i], counts[i])
+            //}
         }
 
         onTriggered: {
