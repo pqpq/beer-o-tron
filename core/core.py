@@ -129,6 +129,7 @@ def main():
 
     heard_from_gui = False
     keep_looping = True
+    test_mode = False
 
     def send_splash():
         send_message("image " + installation_path + "splash.png")
@@ -210,12 +211,13 @@ def main():
             send_message("preset \"" + d["filepath"] + "\" \"" + d["name"] + "\" \"" + d["description"] + "\"")
 
     def go_to_idle():
-        nonlocal activity, state_logger
+        nonlocal activity, state_logger, test_mode
         activity = Idle(logger)
         all_off()
         state_logger = None
         send_splash()
         send_message("ok")
+        test_mode = False
 
     def decode_message(message):
         nonlocal activity, logger, keep_looping, temperature_reader
@@ -252,6 +254,11 @@ def main():
             all_off()   # do this first, before complex functions that might throw exceptions
             logger.log(message)
             go_to_idle()
+        if command == "testmode":
+            logger.log(message)
+            go_to_idle()
+            test_mode = True
+            send_message("testshow \"aardvark<br>badger<br>cat<br>dog")
 
         nonlocal heard_from_gui
         if not heard_from_gui:
