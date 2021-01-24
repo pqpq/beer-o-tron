@@ -69,6 +69,9 @@ class Activity:
     def determine_state(self, average, seconds):
         target = self.profile.temperature_at(seconds)
         state = Activity.State.OK
+        # No attempt at a control algorithm, or hysteresis.
+        # We are dealing with many Kg of water, and measurements every
+        # 10 seconds so things will not change rapidly.
         if not math.isnan(target):
             if average < target - 0.5:
                 state = Activity.State.COLD
@@ -112,7 +115,7 @@ class Hold(Activity):
         return True
 
     def tick(self):
-        self.seconds = self.seconds + 1
+        self.seconds = self.profile.seconds()
         send_message("time " + str(self.seconds))
         if self.seconds % 60 is 0:
             self.profile.update_rest()
@@ -146,7 +149,7 @@ class Preset(Activity):
         return preset_profile_name == self.profile.file_path
 
     def tick(self):
-        self.seconds = self.seconds + 1
+        self.seconds = self.profile.seconds()
         send_message("time " + str(self.seconds))
 
     def set_temperatures(self, temperatures):

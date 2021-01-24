@@ -80,6 +80,9 @@ class Profile():
     def graph_data_path(self):
         return self._graph_data_path
 
+    def seconds(self):
+        return (datetime.now() - self.start_time).total_seconds()
+
     def __rest_minutes(self):
         seconds = (datetime.now() - self.last_change).total_seconds()
         return seconds / 60.0
