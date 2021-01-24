@@ -39,6 +39,12 @@ Window {
     property int temperatureBackgroundWidth: window.width / 2
     property int temperatureBackgroundHeight: temperatureTextSize * 2
 
+    property int testModeTextAreaWidth: window.width * 5/6
+    property int testModeTextAreaHeight: window.height * 5/8
+    property int testModeTextAreaMargin: unitOfSize / 4
+    property color testModeTextAreaBackgroundColour: "cornsilk"
+    property int testModeTextFontSize: unitOfSize * 2/3
+
     readonly property string backgroundColor: "lightgrey"
     readonly property real backgroundOpacity: 0.75
 
@@ -447,6 +453,27 @@ Window {
             color: backgroundColor
             z: -1
         }
+
+        Rectangle {
+            id: testArea
+
+            anchors.centerIn: parent
+            width: testModeTextAreaWidth
+            height: testModeTextAreaHeight
+
+            opacity: backgroundOpacity
+            color: testModeTextAreaBackgroundColour
+
+            Text {
+                id: testText
+                anchors.fill: parent
+                anchors.margins: testModeTextAreaMargin
+                font.pixelSize: testModeTextFontSize
+                font.family: "consolas"
+                elide: Text.ElideRight
+                opacity: 1.0
+            }
+        }
     }
 
     Item {
@@ -465,6 +492,7 @@ Window {
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
+                PropertyChanges { target: testArea; visible: false }
 
                 readonly property var actions: [menu.noAction, presetList.repopulate, menu.noAction, menu.allStop]
                 readonly property var nextStates: ["hold.temperature", "preset.choose", "", ""]
@@ -479,6 +507,7 @@ Window {
                 PropertyChanges { target: temperatureSetter; visible: true }
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
+                PropertyChanges { target: testArea; visible: false }
 
                 readonly property var actions: [menu.idle, temperatureSetter.decrease, temperatureSetter.increase, temperatureSetter.set]
                 readonly property var nextStates: ["top", "", "", "hold.run"]
@@ -493,6 +522,7 @@ Window {
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
+                PropertyChanges { target: testArea; visible: false }
 
                 readonly property var actions: [menu.noAction, menu.noAction, menu.noAction, menu.allStop]
                 readonly property var nextStates: ["hold.temperature", "", "", "top"]
@@ -507,6 +537,7 @@ Window {
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: true }
                 PropertyChanges { target: presetDetails; visible: false }
+                PropertyChanges { target: testArea; visible: false }
 
                 readonly property var actions: [menu.noAction, presetList.down, presetList.up, presetList.select]
                 readonly property var nextStates: ["top", "", "", "preset.confirm"]
@@ -521,6 +552,7 @@ Window {
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: true }
+                PropertyChanges { target: testArea; visible: false }
 
                 readonly property var actions: [menu.idle, menu.noAction, menu.noAction, presetList.run]
                 readonly property var nextStates: ["preset.choose", "", "", "preset.run"]
@@ -535,6 +567,7 @@ Window {
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
+                PropertyChanges { target: testArea; visible: false }
 
                 readonly property var actions: [menu.noAction, menu.noAction, menu.noAction, menu.allStop]
                 readonly property var nextStates: ["preset.confirm", "", "", "top"]
@@ -549,6 +582,7 @@ Window {
                 PropertyChanges { target: temperatureSetter; visible: false }
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
+                PropertyChanges { target: testArea; visible: true }
 
                 readonly property var actions: [menu.idle, menu.noAction, menu.noAction, menu.allStop]
                 readonly property var nextStates: ["top", "", "", "top"]
@@ -683,6 +717,12 @@ Window {
                     background.source = ""
                 }
                 background.source = newBackgroundImageSource
+            }
+        }
+        if (message.startsWith("testshow")) {
+            const indexOfPayload = message.indexOf("\"")
+            if (indexOfPayload > 0) {
+                testText.text = message.slice(indexOfPayload + 1, -1)
             }
         }
     }
