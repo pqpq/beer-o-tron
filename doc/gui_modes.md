@@ -41,6 +41,8 @@ General points:
 | 3      |      |        |            |
 | 4      | Stop | Send `allstop` | |
 
+Press and hold button 4 -> Test mode
+
 ## Hold Temperature
 
 * Displays the preset temperature in the middle of the screen and allows the user to change it.
@@ -85,7 +87,7 @@ General points:
 | 1      | Back | Send `idle` | Preset Choose |
 | 2      |      |        |            |
 | 3      |      |        |            |
-| 4      | Tick | Send `run <preset name>` | Preset Run |
+| 4      | Tick | Send `preset <preset name>` | Preset Run |
 
 ## Preset Run
 
@@ -99,4 +101,18 @@ General points:
 | 2      |      |        |            |
 | 3      |      |        |            |
 | 4      | Stop | Send `allstop` | Top |
+
+
+## Test Mode
+
+Core sends all temperature values which are displayed in a column.
+While pressed, buttons 2 and 3 activate heater and pump, but this is done in the core.
+
+| Button | Icon | Action | Next State |
+|--------|------|--------|------------|
+| 1      | Back | Send `idle` | Top   |
+| 2      | Pump |        |            |
+| 3      | Flame |       |            |
+| 4      | Stop | Send `allstop` | Top |
+
 
