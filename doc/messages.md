@@ -17,7 +17,7 @@ Message|Parameters|Meaning
 `preset` | *id* *name* *details* | A pre-set temperature profile.<br>*id* is the unique identifier, delimited with double quotes.<br>*name* is a short name delimited with double quotes.<br>*details* is a longer description delimited with double quotes.
 `button` | *number* [up&#124;down] | Button *number* is pressed or released.<br>With neither 'up' or 'down', a momentary press is simulated.<br>Buttons are numbered 1-4, from left to right.
 `image` | *filename* | Set the background image to *filename*.<br>Resent to reload the same image whenever it changes.
-
+`testshow`| *text* | Arbitrary text to display on the test page.<bt>Delimited in double quotes. May contain &lt;br&gt; line breaks.
 
 ## From GUI
 
