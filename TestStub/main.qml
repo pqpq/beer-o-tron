@@ -31,6 +31,7 @@ ApplicationWindow {
                 "                    0 - time 0    [/] - change time (</> 1 hour steps)\n" +
                 "                    L - hard coded presets      I - hard coded graph\n" +
                 "              1/2/3/4 - momentary key press     N - splash screen\n" +
+                "                    T - test mode key presses\n" +
                 "  B   - toggle responding to heartbeats\n" +
                 "space - toggle auto scroll\n"
         }
@@ -170,6 +171,13 @@ ApplicationWindow {
                 messages.sendOptional("pump", event)
                 event.accepted = true
                 break
+            case Qt.Key_T:
+                messages.send("button 4 down")
+                messages.send("button 1 down")
+                messages.send("button 1 up")
+                messages.send("button 4 up")
+                event.accepted = true
+                break;
             case Qt.Key_Minus:
                 temperature -= 0.1
                 messages.send("temp " + temperature)
