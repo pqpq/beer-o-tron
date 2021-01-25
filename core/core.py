@@ -3,13 +3,7 @@
 #######
 # TODO
 
-# Write the temperature maintainance logic.
-# - determine hot/cold/ok
-# - GPIO, obviously
-# - emit pump and heater status
-# - handle 'allstop'
-
-# Log pump / heater on/off in its own file so we can graph it.
+# Consider an Activity class for test mode.
 
 # Have a names file for temperature sensors, so we can give them nicknames?
 
@@ -96,11 +90,59 @@ button3.when_released = send_up(3)
 button4.when_pressed = send_down(4)
 button4.when_released = send_up(4)
 
+def turn_heater_on():
+    heater.on()
+    send_message("heat on")
+
+def turn_heater_off():
+    heater.off()
+    send_message("heat off")
+
+def turn_pump_on():
+    pump.on()
+    send_message("pump on")
+
+def turn_pump_off():
+    pump.off()
+    send_message("pump off")
+
 def all_off():
     heater.off()
     pump.off()
     send_message("heat off")
     send_message("pump off")
+
+
+# Test mode
+
+test_mode = False
+
+def enter_test_mode():
+    global test_mode
+    if not test_mode:
+        test_mode = True
+        button2.when_pressed = turn_pump_on
+        button2.when_released = turn_pump_off
+        button3.when_pressed = turn_heater_on
+        button3.when_released = turn_heater_off
+
+def leave_test_mode():
+    global test_mode
+    if test_mode:
+        test_mode = False
+        button2.when_pressed = send_down(2)
+        button2.when_released = send_up(2)
+        button3.when_pressed = send_down(3)
+        button3.when_released = send_up(3)
+
+def send_temperature_debug(temperature_reader):
+    names = temperature_reader.sensor_names()
+    values = temperature_reader.temperatures()
+    lines = []
+    for n, v in zip(names, values):
+        lines.append("" + n + " {:.2f}".format(v))
+    message = "testshow \"" + "<br>".join(lines) + "\""
+    send_message(message)
 
 
 def main():
@@ -129,26 +171,9 @@ def main():
 
     heard_from_gui = False
     keep_looping = True
-    test_mode = False
 
     def send_splash():
         send_message("image " + installation_path + "splash.png")
-
-    def turn_heater_on():
-        heater.on()
-        send_message("heat on")
-
-    def turn_heater_off():
-        heater.off()
-        send_message("heat off")
-
-    def turn_pump_on():
-        pump.on()
-        send_message("pump on")
-
-    def turn_pump_off():
-        pump.off()
-        send_message("pump off")
 
     def update_temperatures():
         nonlocal temperature_reader, activity
@@ -211,13 +236,13 @@ def main():
             send_message("preset \"" + d["filepath"] + "\" \"" + d["name"] + "\" \"" + d["description"] + "\"")
 
     def go_to_idle():
-        nonlocal activity, state_logger, test_mode
-        activity = Idle(logger)
+        nonlocal activity, state_logger
         all_off()
+        activity = Idle(logger)
         state_logger = None
         send_splash()
         send_message("ok")
-        test_mode = False
+        leave_test_mode()
 
     def decode_message(message):
         nonlocal activity, logger, keep_looping, temperature_reader
@@ -257,8 +282,7 @@ def main():
         if command == "testmode":
             logger.log(message)
             go_to_idle()
-            test_mode = True
-            send_message("testshow \"aardvark<br>badger<br>cat<br>dog")
+            enter_test_mode()
 
         nonlocal heard_from_gui
         if not heard_from_gui:
@@ -266,8 +290,10 @@ def main():
             heard_from_gui = True
 
     def do_one_second_actions():
-        nonlocal activity
-        activity.tick()
+        if test_mode:
+            send_temperature_debug(temperature_reader)
+        else:
+            activity.tick()
 
     def do_ten_second_actions():
         update_temperatures()
