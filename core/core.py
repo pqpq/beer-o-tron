@@ -282,6 +282,7 @@ def main():
         if command == "testmode":
             logger.log(message)
             go_to_idle()
+            send_message("image " + installation_path + "testcardf.png")
             enter_test_mode()
 
         nonlocal heard_from_gui
