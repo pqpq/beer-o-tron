@@ -179,7 +179,7 @@ ApplicationWindow {
                 messages.send("testshow \"SkjdshfkH    44.3<br>"+
                                          "abc12345     10.1<br>" +
                                          "0340j0f09j3409fjj34 12.3<br>" +
-                                         "0430if-0ie-0Fi0R 33.003")
+                                         "0430if-0ie-0Fi0R 33.003\"")
                 event.accepted = true
                 break;
             case Qt.Key_Minus:

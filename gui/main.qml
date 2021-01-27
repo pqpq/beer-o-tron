@@ -668,8 +668,8 @@ Window {
     }
 
     function decode(message) {
-        const originalMessage = message
         message = message.trim()
+        const originalMessage = message
         message = message.toLowerCase()
 
         if (message === "hot") {
