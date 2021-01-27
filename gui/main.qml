@@ -851,12 +851,13 @@ Window {
                         menu.buttonPressed(i+1)
                     }
 
-                    // increase speed of autorepeat after 2 seconds
+                    // Increase speed of autorepeat after 2 seconds.
+                    // Send 9 more so we start incrementing the units rather
+                    // than the tenths.
                     if (counts[i] > (2 * 1000/interval)) {
-                        menu.buttonPressed(i+1)
-                        menu.buttonPressed(i+1)
-                        menu.buttonPressed(i+1)
-                        menu.buttonPressed(i+1)
+                        for (let n = 0; n < 9; n++) {
+                            menu.buttonPressed(i+1)
+                        }
                     }
                 }
                 //console.log("  ", i, pressed[i], counts[i])
