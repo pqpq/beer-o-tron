@@ -1,18 +1,18 @@
-# Testing Numbers
+# Test Results
 
 ## Initial tests
 
 ### In air
 Water in the loop, but the loop in air, not damped by a large mass of water.
 
-![Test in air](doc/air_test.png)
+![Test in air](air_test.png)
 
 Undamped, the temperature overshoots due to the slow response of the temperature sensors. This is to be expected and not a problem
 
 ### In water
 In 10l of water
 
-![Test in water](doc/water_test.png)
+![Test in water](water_test.png)
 
 At this point the code is saying `cold`, and heating, when,  `t <= target - 0.5` and saying `hot` when `t > target + 0.5`.
 The graph isn't detailed enough to see, but it hovers around t - 0.5.
@@ -37,7 +37,7 @@ Although accuracy of a fraction of a degree isn't required, this does indicate t
 
 10 litres of water in insulated mash tun but with lid off.
 
-![Wheat profile test run](doc/test1.png)
+![Wheat profile test run](test1.png)
 
 Points:
 * It can't quite heat at 1 degree per minute, but its not far off.

@@ -1,7 +1,5 @@
 ![Photgraph of Mash-o-matiC RPi](doc/mash-o-matic.png)
 
-# Mash-o-matiC
-
 A heating controller for homebrew beer [mashing](https://en.wikipedia.org/wiki/Mashing).
 
 [Messages](doc/messages.md)<br>
@@ -10,7 +8,7 @@ A heating controller for homebrew beer [mashing](https://en.wikipedia.org/wiki/M
 [Temperature Profile File Format](doc/file_format.md)<br>
 [Todo List](doc/todo.md)<br>
 [Project History](doc/history.md)<br>
-[Some test results] (doc/numbers.md)<br>
+[Some test results](doc/numbers.md)<br>
 
 
 This repo is a collection of software that runs on an RPi with an [Adafruit 2315](https://www.adafruit.com/product/2315) - a 2.2" TFT screen with four push buttons (as shown in the photo). Originally it was going to be a touch screen, but push buttons will be more reliable with wet hands.
