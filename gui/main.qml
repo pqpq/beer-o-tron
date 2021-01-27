@@ -668,6 +668,7 @@ Window {
     }
 
     function decode(message) {
+        const originalMessage = message
         message = message.trim()
         message = message.toLowerCase()
 
@@ -717,9 +718,11 @@ Window {
             }
         }
         if (message.startsWith("testshow")) {
-            const indexOfPayload = message.indexOf("\"")
+            const indexOfPayload = originalMessage.indexOf("\"")
             if (indexOfPayload > 0) {
-                testText.text = message.slice(indexOfPayload + 1, -1)
+                let text = originalMessage.slice(indexOfPayload + 1, -1)
+                text = text.replace(/ /g, "&nbsp;")
+                testText.text = text
             }
         }
     }

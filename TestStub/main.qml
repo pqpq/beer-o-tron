@@ -176,7 +176,10 @@ ApplicationWindow {
                 messages.send("button 1 down")
                 messages.send("button 1 up")
                 messages.send("button 4 up")
-                messages.send("testshow \"skjdshfkh 44.3<br>abc12345 10.1<br>0340j0f09j3409fjj34 12.3<br>0430if-0ie-0fi0r 33.003")
+                messages.send("testshow \"SkjdshfkH    44.3<br>"+
+                                         "abc12345     10.1<br>" +
+                                         "0340j0f09j3409fjj34 12.3<br>" +
+                                         "0430if-0ie-0Fi0R 33.003")
                 event.accepted = true
                 break;
             case Qt.Key_Minus:
