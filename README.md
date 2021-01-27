@@ -1,17 +1,19 @@
+![Photgraph of Mash-o-matiC RPi](doc/mash-o-matic.png)
+
 # Mash-o-matiC
+
+A heating controller for homebrew beer [mashing](https://en.wikipedia.org/wiki/Mashing).
 
 [Messages](doc/messages.md)<br>
 [GUI Modes & States](doc/gui_modes.md)<br>
 [Cross Compiling For RPi](doc/rpi_setup.md)<br>
 [Temperature Profile File Format](doc/file_format.md)<br>
 [Todo List](doc/todo.md)<br>
-[Project History](doc/history.md).<br>
+[Project History](doc/history.md)<br>
+[Some test results] (doc/numbers.md)<br>
 
-A heating controller for homebrew beer [mashing](https://en.wikipedia.org/wiki/Mashing).
 
-![Photgraph of Mash-o-matiC RPi](doc/mash-o-matic.png)
-
-This repo is a collection of software that will run on an RPi with an [Adafruit 2315](https://www.adafruit.com/product/2315) - a 2.2" TFT screen with four push buttons (as shown in the photo). Originally it was going to be a touch screen, but push buttons will be more reliable with wet hands. 
+This repo is a collection of software that runs on an RPi with an [Adafruit 2315](https://www.adafruit.com/product/2315) - a 2.2" TFT screen with four push buttons (as shown in the photo). Originally it was going to be a touch screen, but push buttons will be more reliable with wet hands.
 
 The software is in three parts:
 * A core application written in Python3, doing GPIO and maintaining the chosen temperature profile.
@@ -27,7 +29,7 @@ The hardware is:
 
 How it works:
 * The user will choose either a set fixed temperature to maintain, or a temperature profile (different temereratures at different times). 
-* The core will read temperature from a number of sensors and decide whether to turn on the heater and pump, according to a pre-set temperature profile (e.g. maintain 66'C for mashing).
+* The core will read temperature from a number of sensors and decide whether to turn on the heater and pump, according to a pre-set temperature profile (e.g. maintain 66&deg;C for mashing).
 * As time passes the core will record actual temperature and target temperature in a log file
 * Periodically the core will invoke GnuPlot to turn the temperature log into a graph and send it to the GUI code to display
 
@@ -48,7 +50,7 @@ To test the gui:
     mkfifo f1 f2
     TestStub >f1 <f2
     # in a second terminal, or from QtCreator:
-    gui <f1 >f2
+    gui [-w] <f1 >f2
 
 ### GUI Modes
 Early ideas included a completely dumb GUI with the Python code telling it which buttons to show, and receiving each button press. This would mean the Python core would have to contain the basic UI logic as well as the "real" core of the project: the temperature control. 
@@ -59,7 +61,7 @@ The system has a GUI that knows what its doing and communicates with the core at
 
 Each temperature profile is [stored in a file](doc/file_format.md) somewhere on the Pi. How they get there is TBD, but probably by FTP or SCP. Generating them in the GUI will not be trivial.
 
-The Python core will send a list of profile names and details to the GUI when the user wants to choose one. The GUI then sends back the `run` message with the chosen profile name.
+The Python core will send a list of profile names and details to the GUI when the user wants to choose one. The GUI then sends back the `preset` message with the chosen profile name.
 
 ## Tools
 
@@ -67,7 +69,7 @@ This is a classic cross-compiled embedded system. The details of setting up the 
 [cross compiling for RPi](doc/rpi_setup.md)
 
 ### Host
-* Developed on a Linux PC
+* Developed on a Linux PC (Mint 20)
 * Qt 5.15.2
 * QtCreator 4.14.0
 * Python 3
@@ -77,8 +79,8 @@ This is a classic cross-compiled embedded system. The details of setting up the 
 * Adafruit 2315 - a 2.2" TFT screen with four push buttons.
 * Install [Pi TFT Hat drivers](https://learn.adafruit.com/adafruit-2-2-pitft-hat-320-240-primary-display-for-raspberry-pi/easy-install)
 * No keyboard, mouse, or monitor
-* Ethernet during development
 * Might enable WiFi so we can update the software, and download new temperature profiles
+* *Ethernet, keyboard, mouse, and monitor, during development*
 
 
 ## Visual Aspects
