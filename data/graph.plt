@@ -6,18 +6,20 @@
 # Parameter 1: output file name
 # Parameter 2: Temperature axis min value
 # Parameter 3: Temperature axis max value
-# Parameter 4: Temperature data file name
-# Parameter 5: Profile data file name
-# Parameter 6: State data file name
+# Parameter 4: Time axis start value
+# Parameter 5: Temperature data file name
+# Parameter 6: Profile data file name
+# Parameter 7: State data file name
 
-if (ARGC < 6) exit
+if (ARGC < 7) exit
 
 OUTPUT=ARG1
 LOW=ARG2
 HI=ARG3
-DATA=ARG4
-PROFILE=ARG5
-STATE=ARG6
+XSTART=ARG4
+DATA=ARG5
+PROFILE=ARG6
+STATE=ARG7
 
 
 # Fixed format & 'style' commands
@@ -28,7 +30,6 @@ set key autotitle columnhead  # consume first row, since we 'unset key' later
 unset key
 set timefmt "%H:%M:%S"        # so it understands our time values
 set xdata time
-set xtic auto
 set xtics format ""           # turn off labels
 set ytic 10
 set ytics right offset 1,0    # right justify, close to axis
@@ -64,6 +65,9 @@ set style line 3 \
 
 set output OUTPUT
 set yrange [LOW:HI]
+set xrange [XSTART:]
+set xtics XSTART,60*10                # 10 minutes
+
 set datafile sep ','
 plot STATE using 1:3 with filledcurve above x1 lc "#ff9900" axes x1y2, \
      DATA using 1:2 with lines linestyle 1, \

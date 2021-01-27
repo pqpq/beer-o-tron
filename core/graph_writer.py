@@ -19,7 +19,7 @@ class GraphWriter:
     As we log the temperature we update the graph so the user can see
     what's going on.
     """
-    def __init__(self, logger, graph_output_path, gnuplot_command_file, temperature_log_path, profile_data_path, state_log_path):
+    def __init__(self, logger, graph_output_path, gnuplot_command_file, temperature_log_path, profile_data_path, state_log_path, start_time):
         """
         logger: a Logger in case we need to report errors
         graph_output_path : the path for the graph we are creating
@@ -27,6 +27,7 @@ class GraphWriter:
         temperature_log_path: the path to the temperature log to use for the graph
         profile_data_path: the path to the profile data to use for the graph
         state_log_path: the path to the state data to use for the graph
+        start_time: the start time of the graph, for the x-axis
         """
         self.logger = logger
         self.temperature_log_path = temperature_log_path
@@ -38,6 +39,7 @@ class GraphWriter:
             self.graph_output_path,
             "15",
             "85",
+            start_time.strftime("%H:%M:%S"),
             self.temperature_log_path,
             profile_data_path,
             state_log_path

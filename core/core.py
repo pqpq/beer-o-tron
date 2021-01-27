@@ -3,8 +3,6 @@
 #######
 # TODO
 
-# pass start time to gnuplot so we can fix the start of the x axis
-
 # Consider an Activity class for test mode.
 
 # Put data labels on the profile graph? There are only points for start
@@ -38,6 +36,7 @@ from gpiozero import Button, LED
 from time import sleep
 from pathlib import Path
 from shutil import copyfile
+from datetime import datetime
 
 from profile import Profile
 from temperature_reader import TemperatureReader
@@ -214,7 +213,7 @@ def main():
             profile = Profile(run_folder + "profile.json", run_folder + "profile.dat", logger)
             profile.create_hold_profile(temperature, Hold.rest_additional_minutes)
 
-            graph_writer = GraphWriter(logger, run_folder + "graph.png", gnuplot_command_file, temperature_logger.path, profile.graph_data_path(), state_logger.path)
+            graph_writer = GraphWriter(logger, run_folder + "graph.png", gnuplot_command_file, temperature_logger.path, profile.graph_data_path(), state_logger.path, datetime.now())
 
             activity = Hold(logger, profile, temperature_logger, graph_writer)
             turn_pump_on()
@@ -233,7 +232,7 @@ def main():
             profile = Profile(profile_name, run_folder + "profile.dat", logger)
             profile.write_plot()
 
-            graph_writer = GraphWriter(logger, run_folder + "graph.png", gnuplot_command_file, temperature_logger.path, profile.graph_data_path(), state_logger.path)
+            graph_writer = GraphWriter(logger, run_folder + "graph.png", gnuplot_command_file, temperature_logger.path, profile.graph_data_path(), state_logger.path, datetime.now())
 
             activity = Preset(logger, profile, temperature_logger, graph_writer)
             turn_pump_on()
