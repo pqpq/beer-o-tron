@@ -66,18 +66,26 @@ class Activity:
     def is_running_preset(self, preset_profile_name):
         return False
 
-    def determine_state(self, average, seconds):
+    def state(self, average_temperature, is_heater_on):
+        return average_temperature, Activity.State.OK, False
+
+    def determine_state(self, temperature, seconds, heater_is_on):
+        """
+        Determine the desired state.
+        temperature - the current sensor temperature
+        seconds - the time into the profile.
+        heater_is_on - whether the heater is already on now
+        """
         target = self.profile.temperature_at(seconds)
         state = Activity.State.OK
-        # No attempt at a control algorithm, or hysteresis.
-        # We are dealing with many Kg of water, and measurements every
-        # 10 seconds so things will not change rapidly.
+        should_heat = False
         if not math.isnan(target):
-            if average < target - 0.5:
+            if temperature <= target - 0.6:
                 state = Activity.State.COLD
-            if average > target + 0.5:
+            if temperature > target + 0.5:
                 state = Activity.State.HOT
-        return target, state
+            should_heat = temperature < (target - 0.5)
+        return target, state, should_heat
 
 
 class Idle(Activity):
@@ -88,9 +96,6 @@ class Idle(Activity):
     def __init__(self, logger):
         super().__init__(logger)
 
-    def set_temperatures(self, temperatures):
-        average = super().set_temperatures(temperatures)
-        return average, Activity.State.OK
 
 class Hold(Activity):
     """ An Activity that maintains a fixed temperature hold Profile. """
@@ -124,9 +129,8 @@ class Hold(Activity):
         self.profile.change_set_point(temperature)
         self.send_updated_graph()
 
-    def set_temperatures(self, temperatures):
-        average = super().set_temperatures(temperatures)
-        return self.determine_state(average, self.seconds)
+    def state(self, average_temperature, is_heater_on):
+        return super().determine_state(average_temperature, self.seconds, is_heater_on)
 
 
 class Preset(Activity):
@@ -152,6 +156,5 @@ class Preset(Activity):
         self.seconds = self.profile.seconds()
         send_message("time " + str(self.seconds))
 
-    def set_temperatures(self, temperatures):
-        average = super().set_temperatures(temperatures)
-        return self.determine_state(average, self.seconds)
+    def state(self, average_temperature, is_heater_on):
+        return super().determine_state(average_temperature, self.seconds, is_heater_on)

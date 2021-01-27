@@ -3,13 +3,12 @@
 #######
 # TODO
 
+# pass start time to gnuplot so we can fix the start of the x axis
+
 # Consider an Activity class for test mode.
 
-# Have a names file for temperature sensors, so we can give them nicknames?
-
-# Always run the pump? It will help to even the temperature top to bottom
-# Maybe start off not alway running, and have a good look at the temperature logs,
-# so we can see whether there is a real difference.
+# Put data labels on the profile graph? There are only points for start
+# and end of each step, so it might not be too cluttered.
 
 # What happens after a preset Profile expires - we need to extend the
 # time as temperature readings continue. Maybe this will happen automatically
@@ -20,6 +19,7 @@
 
 # Add profile step "off"? Can acheive this by mashout with a low value,
 # but that shows on the graph.
+
 
 """
 Mash-o-matiC Core.
@@ -140,7 +140,7 @@ def send_temperature_debug(temperature_reader):
     values = temperature_reader.temperatures()
     lines = []
     for n, v in zip(names, values):
-        lines.append("" + n + " {:.2f}".format(v))
+        lines.append("{0:16} {1:.2f}".format(n, v))
     message = "testshow \"" + "<br>".join(lines) + "\""
     send_message(message)
 
@@ -154,6 +154,7 @@ def main():
     log_folder           = installation_path + "logs/"
     profiles_folder      = installation_path + "profiles/"
     gnuplot_command_file = installation_path + "graph.plt"
+    sensor_names_file    = installation_path + "sensor_names.txt"
 
     all_off()
 
@@ -161,7 +162,7 @@ def main():
         sys.stderr.write("gnuplot file missing: " + gnuplot_command_file + "\n")
         sys.exit()
 
-    temperature_reader = TemperatureReader()
+    temperature_reader = TemperatureReader(sensor_names_file)
     temperature_reader.start()
 
     logger = Logger(log_folder + "core", initial_log = "Mash-o-matiC", log_creation_to_stderr = True)
@@ -178,21 +179,26 @@ def main():
     def update_temperatures():
         nonlocal temperature_reader, activity
         temperatures = temperature_reader.temperatures()
-        target, state = activity.set_temperatures(temperatures)
+        average = activity.set_temperatures(temperatures)
+        target, state, should_heat = activity.state(average, heater.is_lit)
+
         if state == Activity.State.HOT:
             send_message("hot")
-            turn_heater_off()
-            # start timer to turn pump off after a minute or something?
         if state == Activity.State.COLD:
             send_message("cold")
-            turn_pump_on()
-            turn_heater_on()
         if state == Activity.State.OK:
             send_message("ok")
-            turn_heater_off()
-            # timer?
+
+        if should_heat and not heater.is_lit:
+            turn_pump_on()
+            turn_heater_on()
+        else:
+            if heater.is_lit and not should_heat:
+                turn_heater_off()
+
         if state_logger is not None:
             state_logger.log_values([target, 1 if heater.is_lit else 0, 1 if pump.is_lit else 0])
+
         activity.send_updated_graph()
 
     def hold(temperature):
@@ -211,6 +217,8 @@ def main():
             graph_writer = GraphWriter(logger, run_folder + "graph.png", gnuplot_command_file, temperature_logger.path, profile.graph_data_path(), state_logger.path)
 
             activity = Hold(logger, profile, temperature_logger, graph_writer)
+            turn_pump_on()
+
         update_temperatures()
 
     def preset(profile_name):
@@ -228,6 +236,7 @@ def main():
             graph_writer = GraphWriter(logger, run_folder + "graph.png", gnuplot_command_file, temperature_logger.path, profile.graph_data_path(), state_logger.path)
 
             activity = Preset(logger, profile, temperature_logger, graph_writer)
+            turn_pump_on()
             update_temperatures()
 
     def send_list():

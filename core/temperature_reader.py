@@ -8,6 +8,7 @@ DS18B20 temperature sensor management
 import threading
 import sys
 from time import sleep
+from pathlib import Path
 
 
 def read_file(filename):
@@ -38,20 +39,24 @@ class TemperatureReader:
             self.value = 0.0
 
         def read(self, lock):
-            with open(self.path + "/temperature") as f:
-                raw_value = f.read()
-                try:
-                    value = float(raw_value)
-                except ValueError:
-                    sys.stderr.write("Couldn't parse '" + raw_value + "' for temperature sensor '" + self.name + "'\n")
-                else:
-                    lock.acquire()
-                    self.value = value / 1000
-                    lock.release()
+            try:
+                with open(self.path + "/temperature") as f:
+                    raw_value = f.read()
+                    try:
+                        value = float(raw_value)
+                    except ValueError:
+                        sys.stderr.write("Couldn't parse '" + raw_value + "' for temperature sensor '" + self.name + "'\n")
+                    else:
+                        lock.acquire()
+                        self.value = value / 1000
+                        lock.release()
+            except FileNotFoundError:
+                sys.stderr.write("Couldn't read sensor '" + self.name + "'\n")
 
-    def __init__(self):
+    def __init__(self, sensor_names_file):
         self.sensors = []
         self.lock = threading.Lock()
+        self.sensor_names_file = sensor_names_file
 
     def start(self):
         self.thread = threading.Thread(target=TemperatureReader.__thread_function, daemon=True, args=(self,))
@@ -73,13 +78,31 @@ class TemperatureReader:
         self.lock.release()
         return values
 
+    def __sensor_nicknames(self):
+        nicknames = {}
+        if Path(self.sensor_names_file).is_file():
+            lines = read_file(self.sensor_names_file)
+            for line in lines:
+                parts = line.strip().split(" ")
+                if len(parts) == 2:
+                    nicknames[parts[0]] = parts[1]
+        print ("__sensor_nicknames() :", nicknames)
+        return nicknames
+
     def __discover_sensors(self):
+        nicknames = self.__sensor_nicknames()
+
         self.sensors.clear()
         sensors = read_file(TemperatureReader.one_wire_device_path + "w1_bus_master1/w1_master_slaves")
         self.lock.acquire()
         for i in sensors:
             name = i.rstrip()
-            self.sensors.append(TemperatureReader.Sensor(name, TemperatureReader.one_wire_device_path + name))
+            path = TemperatureReader.one_wire_device_path + name
+            if name in nicknames:
+                nickname = nicknames[name]
+                if nickname is not "":
+                    name = nickname
+            self.sensors.append(TemperatureReader.Sensor(name, path))
         self.lock.release()
 
     def __read_sensors(self):
