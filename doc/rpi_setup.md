@@ -48,7 +48,6 @@ Now build a version of Qt for the RPi with all the Qt modules we need:
     git clone git://code.qt.io/qt/qtbase.git -b 5.12
     cd qtbase
     ./configure -release -opengl es2 -device linux-rasp-pi3-g++ -device-option CROSS_COMPILE=~/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin/arm-linux-gnueabihf- -sysroot ~/raspi/sysroot -opensource -confirm-license -make libs -prefix /usr/local/qt5pi -extprefix ~/raspi/qt5pi -hostprefix ~/raspi/qt5 -v
-    make -j4
     make -j4 install
     cd ..
 
@@ -56,25 +55,20 @@ Now build a version of Qt for the RPi with all the Qt modules we need:
     git clone git://code.qt.io/qt/qtdeclarative.git -b 5.12
     cd qtdeclarative
     ~/raspi/qt5/bin/qmake
-    make -j4
-    make install
+    make -j4 install
     cd ..
 
     # This is a dependency of qtquickcontrols2
     git clone git://code.qt.io/qt/qtxmlpatterns.git -b 5.12
     cd qtxmlpatterns
     ~/raspi/qt5/bin/qmake
-    make -j4
-    make install
+    make -j4 install
     cd ..
 
-    # I don't think this needs the ./configure line.
-    # I think I copy & pasted it, but haven't re-run it since, to check
-    # qtquickcontrols2 doesn't have a configure script, just configure.json
+    # qtquickcontrols2
     git clone git://code.qt.io/qt/qtquickcontrols2.git -b 5.12
     cd qtquickcontrols2
-    ./configure -release -opengl es2 -device linux-rasp-pi3-g++ -device-option CROSS_COMPILE=~/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin/arm-linux-gnueabihf- -sysroot ~/raspi/sysroot -opensource -confirm-license -make libs -prefix /usr/local/qt5pi -extprefix ~/raspi/qt5pi -hostprefix ~/raspi/qt5 -v
-    make -j4
+    ~/raspi/qt5/bin/qmake
     make -j4 install
     cd ..
 
@@ -82,8 +76,7 @@ Now build a version of Qt for the RPi with all the Qt modules we need:
     git clone git://code.qt.io/qt/qtsvg.git -b 5.12
     cd qtsvg
     ~/raspi/qt5/bin/qmake
-    make -j4
-    make install
+    make -j4 install
     cd ..
 
 
@@ -127,6 +120,33 @@ To build mash-o-matic:
 It works! But SVG doesn't, so go back in time and build qtsvg (see above).
 
 Repeat these last steps ad infinitum until the "product" is ready to ship.
+
+
+## Second time around
+
+Configuring an RPi 3 Model A ...
+
+I had a lot of trouble configuring QtBase. First it complained about OpenGL ES2, then I had runtime issues with xcb platform support.
+
+    qt.qpa.plugin: Could not find the Qt platform plugin "xcb" in ""
+    Unable to query physical screen size, defaulting to 100 dpi.
+    To override, set QT_QPA_EGLFS_PHYSICAL_WIDTH and QT_QPA_EGLFS_PHYSICAL_HEIGHT (in millimeters).
+    qt.qpa.input: xkbcommon not available, not performing key mapping
+
+I though maybe I needed to install the TFTHat drivers before generating the sysroom (as I had probably done it in that order on the first try, on the 3B) but that didn't fix it. In the end I found that I needed to do this on the RPi
+
+    sudo apt-get update
+    sudo apt-get upgrade
+    # loads of things installed
+
+Then 
+
+    sudo apt-get build-dep libqt5gui5 
+
+again, which completed without errors, fixing a load of problems that had occurred the first time due to missing or "but it is not going to be installed" dependencies, which I had ignored. After this I rsynced everything in sysroot again, cleared out all the configurations and re-built qtbase and all the packages.
+
+Sorted!
+
 
 
 
