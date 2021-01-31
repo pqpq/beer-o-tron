@@ -3,6 +3,9 @@
 #######
 # TODO
 
+# Send an error message if there are no temperature sensors.
+# For this we need a new 'error' message to send to the gui
+
 # Consider an Activity class for test mode.
 
 # Put data labels on the profile graph? There are only points for start
@@ -71,8 +74,8 @@ button2 = Button(22)
 button3 = Button(23)
 button4 = Button(27)
 
-heater = LED(20)
-pump = LED(21)
+heater = LED(21)
+pump = LED(20)
 
 def send_down(button):
     return lambda : send_message("button "+str(button)+" down")
