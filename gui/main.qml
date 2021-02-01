@@ -474,6 +474,27 @@ Window {
                 opacity: 1.0
             }
         }
+
+        Rectangle {
+            id: errorArea
+
+            anchors.centerIn: parent
+            width: testModeTextAreaWidth
+            height: testModeTextAreaHeight
+
+            opacity: backgroundOpacity
+            color: "white"
+
+            Text {
+                id: errorText
+                anchors.fill: parent
+                anchors.margins: testModeTextAreaMargin
+                font.pixelSize: textSize
+                color: "red"
+                wrapMode: Text.Wrap
+                opacity: 1.0
+            }
+        }
     }
 
     Item {
@@ -492,6 +513,7 @@ Window {
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
                 PropertyChanges { target: testArea; visible: false }
+                PropertyChanges { target: errorArea; visible: false }
 
                 readonly property var actions: [menu.noAction, presetList.repopulate, menu.noAction, menu.allStop]
                 readonly property var nextStates: ["hold.temperature", "preset.choose", "", ""]
@@ -507,6 +529,7 @@ Window {
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
                 PropertyChanges { target: testArea; visible: false }
+                PropertyChanges { target: errorArea; visible: false }
 
                 readonly property var actions: [menu.idle, temperatureSetter.decrease, temperatureSetter.increase, temperatureSetter.set]
                 readonly property var nextStates: ["top", "", "", "hold.run"]
@@ -522,6 +545,7 @@ Window {
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
                 PropertyChanges { target: testArea; visible: false }
+                PropertyChanges { target: errorArea; visible: false }
 
                 readonly property var actions: [menu.noAction, menu.noAction, menu.noAction, menu.allStop]
                 readonly property var nextStates: ["hold.temperature", "", "", "top"]
@@ -537,6 +561,7 @@ Window {
                 PropertyChanges { target: presetList; visible: true }
                 PropertyChanges { target: presetDetails; visible: false }
                 PropertyChanges { target: testArea; visible: false }
+                PropertyChanges { target: errorArea; visible: false }
 
                 readonly property var actions: [menu.noAction, presetList.down, presetList.up, presetList.select]
                 readonly property var nextStates: ["top", "", "", "preset.confirm"]
@@ -552,6 +577,7 @@ Window {
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: true }
                 PropertyChanges { target: testArea; visible: false }
+                PropertyChanges { target: errorArea; visible: false }
 
                 readonly property var actions: [menu.idle, menu.noAction, menu.noAction, presetList.run]
                 readonly property var nextStates: ["preset.choose", "", "", "preset.run"]
@@ -567,6 +593,7 @@ Window {
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
                 PropertyChanges { target: testArea; visible: false }
+                PropertyChanges { target: errorArea; visible: false }
 
                 readonly property var actions: [menu.noAction, menu.noAction, menu.noAction, menu.allStop]
                 readonly property var nextStates: ["preset.confirm", "", "", "top"]
@@ -582,9 +609,25 @@ Window {
                 PropertyChanges { target: presetList; visible: false }
                 PropertyChanges { target: presetDetails; visible: false }
                 PropertyChanges { target: testArea; visible: true }
+                PropertyChanges { target: errorArea; visible: false }
 
                 readonly property var actions: [menu.idle, menu.noAction, menu.noAction, menu.allStop]
                 readonly property var nextStates: ["top", "", "", "top"]
+            },
+            State {
+                name: "error"
+                PropertyChanges { target: button1; visible: false }
+                PropertyChanges { target: button2; visible: false }
+                PropertyChanges { target: button3; visible: false }
+                PropertyChanges { target: button4; visible: false }
+                PropertyChanges { target: stopButton; visible: false }
+                PropertyChanges { target: temperatureSetter; visible: false }
+                PropertyChanges { target: presetList; visible: false }
+                PropertyChanges { target: presetDetails; visible: false }
+                PropertyChanges { target: testArea; visible: false }
+                PropertyChanges { target: errorArea; visible: true }
+
+                readonly property var nextStates: ["", "", "", ""]
             }
         ]
 
@@ -629,6 +672,9 @@ Window {
                 messages.send("testmode")
                 menu.state = "test"
             }
+        }
+        function errorMode() {
+            menu.state = "error"
         }
 
         function noAction() {}
@@ -718,11 +764,17 @@ Window {
             }
         }
         if (message.startsWith("testshow")) {
-            const indexOfPayload = originalMessage.indexOf("\"")
-            if (indexOfPayload > 0) {
-                let text = originalMessage.slice(indexOfPayload + 1, -1)
+            let text = parseQuoteDelimitedBody(originalMessage)
+            if (text != "") {
                 text = "<pre>" + text + "<pre/>"
                 testText.text = text
+            }
+        }
+        if (message.startsWith("error")) {
+            let text = parseQuoteDelimitedBody(originalMessage)
+            if (text != "") {
+                menu.errorMode()
+                errorText.text = text
             }
         }
     }
@@ -794,6 +846,14 @@ Window {
         if (!!id && !!name) {
             presets.append({"id":id, "name":name, "description":description})
         }
+    }
+
+    function parseQuoteDelimitedBody(originalMessage) {
+        const indexOfPayload = originalMessage.indexOf("\"")
+        if (indexOfPayload > 0) {
+            return originalMessage.slice(indexOfPayload + 1, -1)
+        }
+        return ""
     }
 
     Timer {

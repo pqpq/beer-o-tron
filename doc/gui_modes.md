@@ -105,8 +105,8 @@ General points:
 
 ## Test Mode
 
-Core sends all temperature values which are displayed in a column.
-While pressed, buttons 2 and 3 activate heater and pump, but this is done in the core.
+* Core sends all temperature values which are displayed in a column.
+* While pressed, buttons 2 and 3 activate heater and pump, but this is done in the core.
 
 | Button | Icon | Action | Next State |
 |--------|------|--------|------------|
@@ -114,5 +114,18 @@ While pressed, buttons 2 and 3 activate heater and pump, but this is done in the
 | 2      | Pump |        |            |
 | 3      | Flame |       |            |
 | 4      | Stop | Send `allstop` | Top |
+
+
+## Error Mode
+
+* Mode is automatic entered when `error` message is received
+* No way out
+
+| Button | Icon | Action | Next State |
+|--------|------|--------|------------|
+| 1      |      |        |            |
+| 2      |      |        |            |
+| 3      |      |        |            |
+| 4      |      |        |            |
 
 

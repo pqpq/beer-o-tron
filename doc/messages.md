@@ -18,6 +18,7 @@ Message|Parameters|Meaning
 `button` | *number* [up&#124;down] | Button *number* is pressed or released.<br>With neither 'up' or 'down', a momentary press is simulated.<br>Buttons are numbered 1-4, from left to right.
 `image` | *filename* | Set the background image to *filename*.<br>Resent to reload the same image whenever it changes.
 `testshow`| *text* | Arbitrary text to display on the test page.<bt>Delimited in double quotes. May contain &lt;br&gt; line breaks.
+`error`| *text* | Arbitrary text to display on the error page.<bt>Delimited in double quotes. May contain &lt;br&gt; line breaks.
 
 ## From GUI
 

@@ -31,7 +31,7 @@ ApplicationWindow {
                 "                    0 - time 0    [/] - change time (</> 1 hour steps)\n" +
                 "                    L - hard coded presets      I - hard coded graph\n" +
                 "              1/2/3/4 - momentary key press     N - splash screen\n" +
-                "                    T - test mode key presses\n" +
+                "                    T - test mode key presses   X - Error message\n" +
                 "  B   - toggle responding to heartbeats\n" +
                 "space - toggle auto scroll\n"
         }
@@ -141,12 +141,12 @@ ApplicationWindow {
                 messages.send("hot")
                 event.accepted = true
                 break
-            case Qt.Key_K:
-                messages.send("ok")
-                event.accepted = true
-                break
             case Qt.Key_I:
                 messages.send("image ../data/graph.png")
+                event.accepted = true
+                break
+            case Qt.Key_K:
+                messages.send("ok")
                 event.accepted = true
                 break
             case Qt.Key_L:
@@ -180,6 +180,10 @@ ApplicationWindow {
                                          "abc12345     10.1<br>" +
                                          "0340j0f09j3409fjj34 12.3<br>" +
                                          "0430if-0ie-0Fi0R 33.003\"")
+                event.accepted = true
+                break;
+            case Qt.Key_X:
+                messages.send("error \"What are you doing Dave?\"")
                 event.accepted = true
                 break;
             case Qt.Key_Minus:
