@@ -721,7 +721,7 @@ Window {
             const indexOfPayload = originalMessage.indexOf("\"")
             if (indexOfPayload > 0) {
                 let text = originalMessage.slice(indexOfPayload + 1, -1)
-                text = text.replace(/ /g, "&nbsp;")
+                text = "<pre>" + text + "<pre/>"
                 testText.text = text
             }
         }
