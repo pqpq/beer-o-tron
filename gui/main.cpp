@@ -4,6 +4,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QCommandLineParser>
+#include <QCursor>
 
 
 int main(int argc, char *argv[])
@@ -25,14 +26,19 @@ int main(int argc, char *argv[])
         parser.showHelp();
         return -1;
     }
+    const bool isWindowed = parser.isSet("w");
 
     qmlRegisterType<Messages>("Beer", 1, 0, "Messages");
 
     QQmlApplicationEngine engine;
 
     QQmlContext *context = engine.rootContext();
-    context->setContextProperty("runWindowed", parser.isSet("w"));
-    context->setContextProperty("pathToGraph", "file:./../data/graph.png");
+    context->setContextProperty("runWindowed", isWindowed);
+
+    if (!isWindowed)
+    {
+        QGuiApplication::setOverrideCursor(QCursor(Qt::BlankCursor));
+    }
 
     engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
     if (engine.rootObjects().isEmpty())
