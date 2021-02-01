@@ -26,7 +26,7 @@
     - after a minute, revert.
     - needs temperature axis on both ends of graph.
     - calculate graph dimension from profile total time.
-- [ ] Test mode. Long press, or press 2 buttons at once.
+- [x] Test mode. Long press, or press 2 buttons at once.
     - Pump on & off
     - Heater on & off
     - Show all temperature readings
