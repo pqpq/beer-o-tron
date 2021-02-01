@@ -73,7 +73,7 @@ This is a classic cross-compiled embedded system. The details of setting up the 
 * Python 3
 
 ### Target
-* RPi Model 3 B
+* RPi Model 3 A
 * Adafruit 2315 - a 2.2" TFT screen with four push buttons.
 * Install [Pi TFT Hat drivers](https://learn.adafruit.com/adafruit-2-2-pitft-hat-320-240-primary-display-for-raspberry-pi/easy-install)
 * No keyboard, mouse, or monitor
@@ -146,5 +146,30 @@ Once devices are attached:
 
 
 
+## The Real System
 
+I "installed" the code by copying various bits & bobs from git, and building the gui application on the host machine, until I ended up with this:
+
+    pi@masher:~ $ ls -l /opt/mash-o-matic/
+    total 180
+    drwxr-xr-x 3 pi pi  4096 Feb  1 14:20 core
+    -rw-r--r-- 1 pi pi  1862 Feb  1 14:41 graph.plt
+    -rwxr-xr-x 1 pi pi 62384 Feb  1 14:48 gui
+    -rwxr-xr-x 1 pi pi   117 Feb  1 14:42 mash.sh
+    drwxr-xr-x 2 pi pi  4096 Feb  1 12:33 profiles
+    -rw-r--r-- 1 pi pi 12373 Feb  1 14:41 splash.png
+    -rw-r--r-- 1 pi pi 85800 Feb  1 14:41 testcardf.png
+
+And to start the program:
+
+    pi@masher:~ $ cat /home/pi/.config/autostart/mash.desktop
+    [Desktop Entry]
+    Encoding=UTF-8
+    Type=Application
+    Name=Mash
+    Comment=
+    Exec=/opt/mash-o-matic/mash.sh
+    StartupNotify=false
+    Terminal=true
+    Hidden=false
 
