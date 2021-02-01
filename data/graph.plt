@@ -72,5 +72,4 @@ set datafile sep ','
 plot STATE using 1:3 with filledcurve above x1 lc "#ff9900" axes x1y2, \
      DATA using 1:2 with lines linestyle 1, \
      PROFILE using 1:2 with lines linestyle 2, \
-     PROFILE using 1:2:(sprintf("%d",$2)) with labels, \
      STATE using 1:2 with lines linestyle 3
