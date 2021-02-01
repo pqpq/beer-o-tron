@@ -1,0 +1,9 @@
+[Desktop Entry]
+Encoding=UTF-8
+Type=Application
+Name=Mash
+Comment=
+Exec=/opt/mash-o-matic/mash.sh
+StartupNotify=false
+Terminal=true
+Hidden=false
