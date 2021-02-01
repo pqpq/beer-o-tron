@@ -5,18 +5,12 @@
 
 # Consider an Activity class for test mode.
 
-# Put data labels on the profile graph? There are only points for start
-# and end of each step, so it might not be too cluttered.
-
 # What happens after a preset Profile expires - we need to extend the
 # time as temperature readings continue. Maybe this will happen automatically
 # because the temperature log will keep growing, and the graph will be
 # updated every 10s?
 
 # Send temperature to GUI as fast as possible, but only log every 10s ?
-
-# Add profile step "off"? Can acheive this by mashout with a low value,
-# but that shows on the graph.
 
 
 """
