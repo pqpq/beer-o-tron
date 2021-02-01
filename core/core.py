@@ -3,9 +3,6 @@
 #######
 # TODO
 
-# Send an error message if there are no temperature sensors.
-# For this we need a new 'error' message to send to the gui
-
 # Consider an Activity class for test mode.
 
 # Put data labels on the profile graph? There are only points for start
@@ -164,11 +161,16 @@ def main():
         sys.stderr.write("gnuplot file missing: " + gnuplot_command_file + "\n")
         sys.exit()
 
-    temperature_reader = TemperatureReader(sensor_names_file)
-    temperature_reader.start()
-
     logger = Logger(log_folder + "core", initial_log = "Mash-o-matiC", log_creation_to_stderr = True)
     state_logger = None
+
+    temperature_reader = TemperatureReader(sensor_names_file)
+    try:
+        temperature_reader.start()
+    except RuntimeError as rt:
+        message = "error \"{0}\"".format(rt)
+        logger.error(message)
+        send_message(message)
 
     activity = Idle(logger)
 
@@ -328,9 +330,14 @@ def main():
         if polls >= polls_in_one_second:
             polls = 0
             seconds = seconds + 1
-            do_one_second_actions()
-            if seconds % 10 == 0:
-                do_ten_second_actions()
+            try:
+                do_one_second_actions()
+                if seconds % 10 == 0:
+                    do_ten_second_actions()
+            except RuntimeError as rt:
+                message = "{0}".format(rt)
+                logger.error(message)
+                send_message("error \"" + message + "\"")
 
 
 if __name__ == "__main__":
@@ -338,6 +345,9 @@ if __name__ == "__main__":
     try:
         main()
         all_off()
+    except RuntimeError as rt:
+        send_message("error \"{0}\"".format(rt))
     except:
-        all_off()
         raise
+    finally:
+        all_off()

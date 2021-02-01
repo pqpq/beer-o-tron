@@ -33,10 +33,12 @@ class TemperatureReader:
 
     class Sensor:
         """ Encapsulate one temperature sensor."""
+
         def __init__(self, name, path):
             self.name = name
             self.path = path
             self.value = 0.0
+            self.errors = 0
 
         def read(self, lock):
             try:
@@ -46,12 +48,19 @@ class TemperatureReader:
                         value = float(raw_value)
                     except ValueError:
                         sys.stderr.write("Couldn't parse '" + raw_value + "' for temperature sensor '" + self.name + "'\n")
+                        self.errors = self.errors + 1
                     else:
                         lock.acquire()
                         self.value = value / 1000
                         lock.release()
+                        self.errors = 0
             except FileNotFoundError:
                 sys.stderr.write("Couldn't read sensor '" + self.name + "'\n")
+                self.errors = self.errors + 1
+
+        def failed(self):
+            return self.errors > 10
+
 
     def __init__(self, sensor_names_file):
         self.sensors = []
@@ -59,15 +68,21 @@ class TemperatureReader:
         self.sensor_names_file = sensor_names_file
 
     def start(self):
+        self.__discover_sensors()
         self.thread = threading.Thread(target=TemperatureReader.__thread_function, daemon=True, args=(self,))
         self.thread.start()
 
     def temperatures(self):
         values = []
+        failures = []
         self.lock.acquire()
         for i in self.sensors:
             values.append(i.value)
+            if i.failed():
+                failures.append(i.name)
         self.lock.release()
+        if len(failures):
+            raise RuntimeError("Temperature sensor problem: " + ",".join(failures))
         return values
 
     def sensor_names(self):
@@ -86,15 +101,19 @@ class TemperatureReader:
                 parts = line.strip().split(" ")
                 if len(parts) == 2:
                     nicknames[parts[0]] = parts[1]
-        print ("__sensor_nicknames() :", nicknames)
         return nicknames
 
     def __discover_sensors(self):
         nicknames = self.__sensor_nicknames()
 
-        self.sensors.clear()
+        count = read_file(TemperatureReader.one_wire_device_path + "w1_bus_master1/w1_master_slave_count")
+        if len(count) > 0 and int(count[0]) == 0:
+            raise RuntimeError("No temperature sensors")
+
         sensors = read_file(TemperatureReader.one_wire_device_path + "w1_bus_master1/w1_master_slaves")
+
         self.lock.acquire()
+        self.sensors.clear()
         for i in sensors:
             name = i.rstrip()
             path = TemperatureReader.one_wire_device_path + name
@@ -110,7 +129,6 @@ class TemperatureReader:
             i.read(self.lock)
 
     def __thread_function(self):
-        self.__discover_sensors()
         while True:
             self.__read_sensors()
             sleep(1)
