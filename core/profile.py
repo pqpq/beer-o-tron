@@ -7,6 +7,7 @@ Profile class
 
 import json
 import math
+import sys
 from pathlib import Path
 from datetime import datetime, timedelta
 from os import scandir
