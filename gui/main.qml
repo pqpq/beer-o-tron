@@ -553,8 +553,8 @@ Window {
             State {
                 name: "preset.choose"
                 PropertyChanges { target: button1; icon.source: "qrc:/icons/close.svg" }
-                PropertyChanges { target: button2; icon.source: "qrc:/icons/down.svg"; enabled: presetList.canGoDown() }
-                PropertyChanges { target: button3; icon.source: "qrc:/icons/up.svg"; enabled: presetList.canGoUp() }
+                PropertyChanges { target: button2; icon.source: "qrc:/icons/up.svg"; enabled: presetList.canGoUp() }
+                PropertyChanges { target: button3; icon.source: "qrc:/icons/down.svg"; enabled: presetList.canGoDown() }
                 PropertyChanges { target: button4; icon.source: "qrc:/icons/check.svg"; visible: true; enabled: presetList.canSelect() }
                 PropertyChanges { target: stopButton; visible: false }
                 PropertyChanges { target: temperatureSetter; visible: false }
@@ -563,7 +563,7 @@ Window {
                 PropertyChanges { target: testArea; visible: false }
                 PropertyChanges { target: errorArea; visible: false }
 
-                readonly property var actions: [menu.noAction, presetList.down, presetList.up, presetList.select]
+                readonly property var actions: [menu.noAction, presetList.up, presetList.down, presetList.select]
                 readonly property var nextStates: ["top", "", "", "preset.confirm"]
             },
             State {

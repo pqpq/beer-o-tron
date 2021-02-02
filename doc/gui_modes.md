@@ -74,8 +74,8 @@ General points:
 | Button | Icon | Action | Next State |
 |--------|------|--------|------------|
 | 1      | X    |        | Top        |
-| 2      | v    | List down   |            |
-| 3      | ^    | List up     |            |
+| 2      | ^    | List up     |            |
+| 3      | v    | List down   |            |
 | 4      | Tick | List select | Preset Confirm           |
 
 ## Preset Confirm
