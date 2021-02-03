@@ -57,3 +57,18 @@ Points:
 * Some experiments with different control algorithms just lead to large overshoots, so we will stick with the simple "heat when t <= target - 0.5". Tests indicate hovering at 0.5&deg; low is fine as we're under reading by 0.5 to 0.7.
 * There is a lag created by having the temperature sensor in the mash away from the coil - it is measuring the temperature as convected away from the coil.
 
+## More tests
+
+I tried the 90&deg; cutout, but instead of cutting the power, the water boiled and started spurting from the overflow bottle so I panicked and switched it off. Need to do a proper test. At least it can hold 75&deg; now.
+
+Looking at the results from 4 temperature sensors in different places, and comparing them to a glass thermometer, and the usual cheap electronic one I use for brewing (both used to produce the numbers above), I concluded that one sensor placed higher up, near the tube, would be good enough, so this is the final configuration.
+
+After properly assembling everything onto the mash tun lid I ran some more tests with the lid on.
+This was with 9l of water, and the loop which displaces another litre, bringing the level quite close to the top.
+
+First, a proper profile:
+![Full profile test run](wheat_test.png)
+
+Then I left it on, but with the pump disconnected, to record the water cooling. This is over 9.5 hours!
+![Cooling curve](cooling_curve.png)
+
